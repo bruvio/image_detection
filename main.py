@@ -130,13 +130,12 @@ def detect_text_circle(image_gray, text_bbox=None, show_plots=False):
         confidence = 80  # Assign a confidence value based on detection
         # if debug:
         LOGGER.debug(f"Circles detected: {len(circles[0])}")
-        cx, cy, radius = map(int, circle)
-        LOGGER.debug(f"Circles detected with centre at {(cx, cy,)} and radius {radius}")
 
         if show_plots:
             output = cv2.cvtColor(roi, cv2.COLOR_GRAY2BGR)
             for circle in circles[0, :]:
                 cx, cy, radius = map(int, circle)
+                LOGGER.debug(f"Circles detected with centre at {(cx, cy,)} and radius {radius}")
                 cv2.circle(output, (cx, cy), radius, (0, 255, 0), 2)
             plt.imshow(output)
             plt.title("Detected Circles Around Text")
@@ -283,7 +282,7 @@ def process_image(image_path, threshold=60, show_plots=False):
     results = {}
 
     # Detect if text is not circled using templates
-    templates_not_circled = ["template_yes.png", "template_no.png"]
+    templates_not_circled = ["template_yes.PNG", "template_no.PNG"]
     detected_not_circled, confidence_not_circled = detect_templates(
         gray,
         templates_not_circled,
@@ -298,7 +297,12 @@ def process_image(image_path, threshold=60, show_plots=False):
     }
 
     # Detect if checkbox is ticked using templates
-    templates_checked = ["template_yes_check.png", "template_no_check.png"]
+    templates_checked = [
+        "template_yes_check.PNG",
+        "template_no_check.PNG",
+        "template_yes_check_hand.PNG",
+        "template_no_check_hand.PNG",
+    ]
     detected_checked, confidence_checked = detect_templates(
         gray,
         templates_checked,
@@ -313,7 +317,7 @@ def process_image(image_path, threshold=60, show_plots=False):
     }
 
     # Detect if checkbox is not ticked using templates
-    templates_unchecked = ["template_yes_uncheck.png", "template_no_uncheck.png"]
+    templates_unchecked = ["template_yes_uncheck.PNG", "template_no_uncheck.PNG"]
     detected_unchecked, confidence_unchecked = detect_templates(
         gray,
         templates_unchecked,
