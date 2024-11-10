@@ -17,7 +17,7 @@ def compute_confidence_from_match(match_value):
     return match_value * 100
 
 
-def template_match(image, template, method=cv2.TM_CCOEFF_NORMED, debug=False):
+def template_match(image, template, method=cv2.TM_CCOEFF_NORMED):
     """
     Performs template matching and returns the maximum match value and location.
     Resizes the template if it is larger than the image.
@@ -26,7 +26,6 @@ def template_match(image, template, method=cv2.TM_CCOEFF_NORMED, debug=False):
         image (numpy.ndarray): Grayscale image where we search for the template.
         template (numpy.ndarray): Grayscale template image to search for.
         method (int): Template matching method.
-        debug (bool): If True, prints debug information.
 
     Returns:
         max_val (float): Maximum match value.
@@ -36,9 +35,8 @@ def template_match(image, template, method=cv2.TM_CCOEFF_NORMED, debug=False):
     img_height, img_width = image.shape[:2]
     tmpl_height, tmpl_width = template.shape[:2]
 
-    if debug:
-        LOGGER.debug(f"Image size: {img_width}x{img_height}")
-        LOGGER.debug(f"Template size before resizing: {tmpl_width}x{tmpl_height}")
+    LOGGER.debug(f"Image size: {img_width}x{img_height}")
+    LOGGER.debug(f"Template size before resizing: {tmpl_width}x{tmpl_height}")
 
     # Check if template is larger than image and resize if necessary
     if tmpl_height > img_height or tmpl_width > img_width:
@@ -49,8 +47,8 @@ def template_match(image, template, method=cv2.TM_CCOEFF_NORMED, debug=False):
         tmpl_height, tmpl_width = template.shape[:2]
         if tmpl_height == 0 or tmpl_width == 0:
             raise ValueError("Template size after resizing is zero. Cannot perform template matching.")
-        if debug:
-            LOGGER.debug(f"Resized template size: {tmpl_width}x{tmpl_height}")
+
+        LOGGER.debug(f"Resized template size: {tmpl_width}x{tmpl_height}")
 
     res = cv2.matchTemplate(image, template, method)
     min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(res)
@@ -78,11 +76,11 @@ def detect_templates(image_gray, templates, label, threshold=0.6, show_plots=Fal
             new_width = int(tmpl_width * scale_factor)
             new_height = int(tmpl_height * scale_factor)
             tmpl = cv2.resize(tmpl, (new_width, new_height), interpolation=cv2.INTER_AREA)
-            # if debug:
+
             LOGGER.debug(f"Resized template '{template}' to ({new_width}, {new_height})")
 
         match_value, location, size = template_match(image_gray, tmpl)
-        # if debug:
+
         LOGGER.debug(f"Template '{template}' match value: {match_value}")
         if match_value > max_match_value:
             max_match_value = match_value
@@ -128,7 +126,7 @@ def detect_text_circle(image_gray, text_bbox=None, show_plots=False):
     if circles is not None:
         detected = True
         confidence = 80  # Assign a confidence value based on detection
-        # if debug:
+
         LOGGER.debug(f"Circles detected: {len(circles[0])}")
 
         if show_plots:
@@ -142,7 +140,7 @@ def detect_text_circle(image_gray, text_bbox=None, show_plots=False):
             plt.axis("off")
             plt.show()
     else:
-        # if debug:
+
         LOGGER.debug("No circles detected around text.")
 
     return detected, confidence
@@ -155,7 +153,6 @@ def detect_tick_marks(checkbox_roi, show_plots=False):
 
     Parameters:
         checkbox_roi (numpy.ndarray): Grayscale image of the checkbox region.
-        debug (bool): If True, prints debug information.
         show_plots (bool): If True, displays plots of detected lines.
 
     Returns:
@@ -216,7 +213,7 @@ def detect_tick_marks(checkbox_roi, show_plots=False):
             intersects = lines_intersect((x1_1, y1_1), (x2_1, y2_1), (x1_2, y1_2), (x2_2, y2_2))
 
             if intersects:
-                # # if debug:
+                #
                 LOGGER.debug(
                     f"Lines {idx} intersect at angle {angle_between:.2f} degrees with lengths {length1:.2f}, {length2:.2f}"
                 )
@@ -226,7 +223,7 @@ def detect_tick_marks(checkbox_roi, show_plots=False):
                     # Further checks can be added for line lengths and positions
                     shape_detected = True
                     confidence = min(100, (100 - angle_between) + (min(length1, length2) * 2))
-                    # # if debug:
+                    #
                     LOGGER.debug(f"V shape detected with confidence {confidence:.2f}")
                     break
 
@@ -234,14 +231,14 @@ def detect_tick_marks(checkbox_roi, show_plots=False):
                 elif 80 <= angle_between <= 100:
                     shape_detected = True
                     confidence = min(90, (angle_between) + (min(length1, length2) * 2))
-                    # # if debug:
+                    #
                     LOGGER.debug(f"X shape detected with confidence {confidence:.2f}")
                     break
 
         if not shape_detected:
             # If no V or X shape detected, but lines are present
             confidence = 50  # Lower confidence
-            # # if debug:
+            #
             LOGGER.debug("Lines detected but no V or X shape formed.")
 
         detected = shape_detected
@@ -258,7 +255,7 @@ def detect_tick_marks(checkbox_roi, show_plots=False):
             plt.show()
 
     else:
-        # if debug:
+
         LOGGER.debug("No lines detected in checkbox.")
 
     return detected, confidence
@@ -408,3 +405,100 @@ def process_image(image_path, threshold=60, show_plots=False):
     }
 
     return payload
+
+
+def annotate_image(image, result_payload, output_path, file_name_prefix="result"):
+    """
+    Adds an annotation to the image based on the overall detection result and saves it.
+    Reduces the font size to fit the text within the image width without scaling the image.
+
+    Parameters:
+        image (numpy.ndarray): The original image.
+        result_payload (dict): The result from the process_image function.
+        output_path (str): Directory where the annotated image will be saved.
+        file_name_prefix (str): Prefix for the output file name.
+
+    Returns:
+        output_file_path (str): The path to the saved annotated image.
+    """
+    # Extract the overall detection result
+    final_result = result_payload.get("final_result", False)
+    test_performed = result_payload.get("test_performed", "")
+    confidence = result_payload.get("confidence", 0)
+
+    # Map test_performed to readable message
+    test_messages = {
+        "circled": "Circled",
+        "not_circled": "Not Circled",
+        "checkbox_checked": "Ticked",
+        "checkbox_unchecked": "Not Ticked",
+        "tick_marks": "Tick Marks Detected",
+    }
+
+    # Default to 'Unknown' if test_performed is not recognized
+    annotation_text = test_messages.get(test_performed, "Unknown")
+
+    # Prepare the annotation text with confidence
+    annotation = f"{annotation_text} ({confidence:.1f}%)"
+
+    # Set color based on final result
+    if final_result:
+        color = (0, 0, 255)  # Red for positive detection
+    else:
+        color = (0, 255, 0)  # Green for negative detection
+
+    # Add the annotation to the image
+    annotated_image = image.copy()
+    img_height, img_width = annotated_image.shape[:2]
+
+    # Starting position for the text
+    x_start = 10
+    y_start = 30
+
+    # Initial font scale and thickness
+    font_scale = 1.0
+    thickness = 1
+    font = cv2.FONT_HERSHEY_SIMPLEX
+
+    # Get text size
+    text_size, _ = cv2.getTextSize(annotation, font, font_scale, thickness)
+    text_width = text_size[0]
+
+    # Minimum font scale to maintain readability
+    MIN_FONT_SCALE = 0.3
+
+    # Calculate the maximum allowed width for the text
+    max_text_width = img_width - 20  # Leave some margin
+
+    # Scale down font if text is wider than image
+    while text_width > max_text_width and font_scale > MIN_FONT_SCALE:
+        font_scale -= 0.1
+        text_size, _ = cv2.getTextSize(annotation, font, font_scale, thickness)
+        text_width = text_size[0]
+
+    # Check if font scale is above minimum threshold
+    if font_scale < MIN_FONT_SCALE:
+        font_scale = MIN_FONT_SCALE
+        text_size, _ = cv2.getTextSize(annotation, font, font_scale, thickness)
+        text_width = text_size[0]
+
+    # Adjust y position if text exceeds image height
+    if y_start + text_size[1] > img_height - 10:
+        LOGGER.debug("Annotation exceeds image height; cannot add annotation.")
+    else:
+        # Add text to the image
+        cv2.putText(annotated_image, annotation, (x_start, y_start), font, font_scale, color, thickness, cv2.LINE_AA)
+
+    # Ensure the output directory exists
+    os.makedirs(output_path, exist_ok=True)
+
+    # Prepare the output file path
+    output_file_name = f"{file_name_prefix}_annotated.png"
+    output_file_path = os.path.join(output_path, output_file_name)
+
+    # Save the annotated image
+    cv2.imwrite(output_file_path, annotated_image)
+
+    LOGGER.info(f"Annotated image saved to {output_file_path}")
+
+    return output_file_path
