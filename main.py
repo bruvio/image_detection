@@ -117,7 +117,7 @@ def detect_text_circle(image_gray, text_bbox=None, show_plots=False):
 
     blurred = cv2.GaussianBlur(roi, (9, 9), 0)
     circles = cv2.HoughCircles(
-        blurred, cv2.HOUGH_GRADIENT, dp=1.2, minDist=20, param1=50, param2=30, minRadius=15, maxRadius=500
+        blurred, cv2.HOUGH_GRADIENT, dp=1.2, minDist=20, param1=50, param2=30, minRadius=15, maxRadius=50
     )
 
     confidence = 0
@@ -227,13 +227,13 @@ def detect_tick_marks(checkbox_roi, show_plots=False):
                     LOGGER.debug(f"V shape detected with confidence {confidence:.2f}")
                     break
 
-                # Check for X shape (cross mark)
-                elif 80 <= angle_between <= 100:
-                    shape_detected = True
-                    confidence = min(90, (angle_between) + (min(length1, length2) * 2))
-                    #
-                    LOGGER.debug(f"X shape detected with confidence {confidence:.2f}")
-                    break
+                # # Check for X shape (cross mark)
+                # elif 80 <= angle_between <= 100:
+                #     shape_detected = True
+                #     confidence = min(90, (angle_between) + (min(length1, length2) * 2))
+                #     #
+                #     LOGGER.debug(f"X shape detected with confidence {confidence:.2f}")
+                #     break
 
         if not shape_detected:
             # If no V or X shape detected, but lines are present
@@ -279,7 +279,16 @@ def process_image(image_path, threshold=60, show_plots=False):
     results = {}
 
     # Detect if text is not circled using templates
-    templates_not_circled = ["template_yes.PNG", "template_no.PNG"]
+    templates_not_circled = [
+        "template_yes.PNG",
+        "template_yes_2.PNG",
+        "template_yes_3.PNG",
+        "template_no.PNG",
+        "template_no_2.PNG",
+        "template_no_3.PNG",
+        "template_no_4.PNG",
+        "template_no_5.PNG",
+    ]
     detected_not_circled, confidence_not_circled = detect_templates(
         gray,
         templates_not_circled,
@@ -295,10 +304,15 @@ def process_image(image_path, threshold=60, show_plots=False):
 
     # Detect if checkbox is ticked using templates
     templates_checked = [
+        "template_yes_check_4.PNG",
+        "template_yes_check_2.PNG",
+        "template_yes_check_3.PNG",
         "template_yes_check.PNG",
         "template_no_check.PNG",
+        "template_no_check_2.PNG",
         "template_yes_check_hand.PNG",
         "template_no_check_hand.PNG",
+        "template_no_check_hand_2.PNG",
     ]
     detected_checked, confidence_checked = detect_templates(
         gray,
@@ -314,7 +328,19 @@ def process_image(image_path, threshold=60, show_plots=False):
     }
 
     # Detect if checkbox is not ticked using templates
-    templates_unchecked = ["template_yes_uncheck.PNG", "template_no_uncheck.PNG"]
+    templates_unchecked = [
+        "template_yes_uncheck.PNG", 
+        "template_yes_uncheck_2.PNG", 
+        "template_yes_uncheck_3.PNG", 
+        "template_yes_uncheck_4.PNG", 
+        "template_yes_uncheck_5.PNG", 
+        "template_no_uncheck.PNG",
+        "template_no_uncheck_2.PNG",
+        "template_no_uncheck_3.PNG",
+        "template_no_uncheck_4.PNG",
+        "template_no_uncheck_5.PNG",
+        "template_no_uncheck_6.PNG",
+        ]
     detected_unchecked, confidence_unchecked = detect_templates(
         gray,
         templates_unchecked,
