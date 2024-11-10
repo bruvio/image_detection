@@ -117,7 +117,7 @@ def detect_text_circle(image_gray, text_bbox=None, show_plots=False):
 
     blurred = cv2.GaussianBlur(roi, (9, 9), 0)
     circles = cv2.HoughCircles(
-        blurred, cv2.HOUGH_GRADIENT, dp=1.2, minDist=20, param1=50, param2=30, minRadius=50, maxRadius=500
+        blurred, cv2.HOUGH_GRADIENT, dp=1.2, minDist=20, param1=50, param2=30, minRadius=10, maxRadius=500
     )
 
     confidence = 0
