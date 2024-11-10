@@ -149,7 +149,7 @@ def detect_text_circle(image_gray, text_bbox=None, show_plots=False):
 def detect_tick_marks(checkbox_roi, show_plots=False):
     """
     Detects tick marks within a checkbox region by analyzing lines
-    and checking for V or X shapes.
+    and checking for V shapes.
 
     Parameters:
         checkbox_roi (numpy.ndarray): Grayscale image of the checkbox region.
@@ -173,7 +173,7 @@ def detect_tick_marks(checkbox_roi, show_plots=False):
 
         LOGGER.debug(f"Lines detected in checkbox: {len(lines)}")
 
-        # Analyze pairs of lines to detect V or X shapes
+        # Analyze pairs of lines to detect V shapes
         combinations = list(itertools.combinations(lines, 2))
         shape_detected = False
         for idx, (line1, line2) in enumerate(combinations):
@@ -213,33 +213,35 @@ def detect_tick_marks(checkbox_roi, show_plots=False):
             intersects = lines_intersect((x1_1, y1_1), (x2_1, y2_1), (x1_2, y1_2), (x2_2, y2_2))
 
             if intersects:
-                #
                 LOGGER.debug(
                     f"Lines {idx} intersect at angle {angle_between:.2f} degrees with lengths {length1:.2f}, {length2:.2f}"
                 )
 
-                # Check for V shape (tick mark)
-                if 20 <= angle_between <= 60:
-                    # Further checks can be added for line lengths and positions
-                    shape_detected = True
-                    confidence = min(100, (100 - angle_between) + (min(length1, length2) * 2))
-                    #
-                    LOGGER.debug(f"V shape detected with confidence {confidence:.2f}")
-                    break
+                # Define parameters for confidence calculation
+                ideal_angle = 40.0  # degrees
+                max_angle_deviation = 20.0  # degrees
+                min_length = 5.0  # pixels
+                max_length = 20.0  # pixels
 
-                # # Check for X shape (cross mark)
-                # elif 80 <= angle_between <= 100:
-                #     shape_detected = True
-                #     confidence = min(90, (angle_between) + (min(length1, length2) * 2))
-                #     #
-                #     LOGGER.debug(f"X shape detected with confidence {confidence:.2f}")
-                #     break
+                # Calculate angle score
+                angle_diff = abs(angle_between - ideal_angle)
+                angle_score = max(0, (max_angle_deviation - angle_diff) / max_angle_deviation)
+
+                # Calculate length score
+                min_len = min(length1, length2)
+                length_score = max(0, min(1, (min_len - min_length) / (max_length - min_length)))
+
+                # Calculate confidence
+                confidence = angle_score * length_score * 100
+
+                LOGGER.debug(f"V shape detected with confidence {confidence:.2f}")
+                shape_detected = True
+                break
 
         if not shape_detected:
-            # If no V or X shape detected, but lines are present
-            confidence = 50  # Lower confidence
-            #
-            LOGGER.debug("Lines detected but no V or X shape formed.")
+            # If no V shape detected, but lines are present
+            confidence = 0  # No confidence since no valid shape was found
+            LOGGER.debug("Lines detected but no valid V shape formed.")
 
         detected = shape_detected
 
@@ -255,7 +257,6 @@ def detect_tick_marks(checkbox_roi, show_plots=False):
             plt.show()
 
     else:
-
         LOGGER.debug("No lines detected in checkbox.")
 
     return detected, confidence
@@ -329,18 +330,18 @@ def process_image(image_path, threshold=60, show_plots=False):
 
     # Detect if checkbox is not ticked using templates
     templates_unchecked = [
-        "template_yes_uncheck.PNG", 
-        "template_yes_uncheck_2.PNG", 
-        "template_yes_uncheck_3.PNG", 
-        "template_yes_uncheck_4.PNG", 
-        "template_yes_uncheck_5.PNG", 
+        "template_yes_uncheck.PNG",
+        "template_yes_uncheck_2.PNG",
+        "template_yes_uncheck_3.PNG",
+        "template_yes_uncheck_4.PNG",
+        "template_yes_uncheck_5.PNG",
         "template_no_uncheck.PNG",
         "template_no_uncheck_2.PNG",
         "template_no_uncheck_3.PNG",
         "template_no_uncheck_4.PNG",
         "template_no_uncheck_5.PNG",
         "template_no_uncheck_6.PNG",
-        ]
+    ]
     detected_unchecked, confidence_unchecked = detect_templates(
         gray,
         templates_unchecked,
