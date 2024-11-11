@@ -4,10 +4,11 @@ import cv2
 import numpy as np
 import os
 import logging
+import glob
 
 # Set up logger
 LOGGER = logging.getLogger(__name__)
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.DEBUG, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 
 
 def compute_confidence_from_match(match_value):
@@ -17,11 +18,84 @@ def compute_confidence_from_match(match_value):
     return match_value * 100
 
 
-import cv2
-import numpy as np
-import logging
+def align_images(template, image, show_plots=False):
+    """
+    Aligns the template to the image using feature matching and homography.
 
-LOGGER = logging.getLogger(__name__)
+    Parameters:
+        template (numpy.ndarray): Grayscale template image.
+        image (numpy.ndarray): Grayscale image to align with.
+        show_plots (bool): If True, displays plots of matching keypoints.
+
+    Returns:
+        aligned_template (numpy.ndarray): Template aligned to the image.
+        homography (numpy.ndarray): Homography matrix used for alignment.
+    """
+    # Initialize ORB detector
+    orb = cv2.ORB_create(nfeatures=500)
+
+    # Find the keypoints and descriptors with ORB
+    keypoints_template, descriptors_template = orb.detectAndCompute(template, None)
+    keypoints_image, descriptors_image = orb.detectAndCompute(image, None)
+
+    if descriptors_template is None or descriptors_image is None:
+        LOGGER.debug("Descriptors not found. Returning original template.")
+        return template, None
+
+    # Match descriptors using KNN with k=2
+    bf = cv2.BFMatcher(cv2.NORM_HAMMING)
+    matches = bf.knnMatch(descriptors_template, descriptors_image, k=2)
+
+    # Apply ratio test
+    good_matches = []
+    ratio_threshold = 0.75
+    for match in matches:
+        if len(match) == 2:
+            m, n = match
+            if m.distance < ratio_threshold * n.distance:
+                good_matches.append(m)
+        elif len(match) == 1:
+            LOGGER.debug("Only one match found for a descriptor; skipping ratio test.")
+
+    if len(good_matches) < 4:
+        LOGGER.debug("Not enough good matches found. Returning original template.")
+        return template, None
+
+    # Extract location of good matches
+    points_template = np.float32([keypoints_template[m.queryIdx].pt for m in good_matches]).reshape(-1, 1, 2)
+    points_image = np.float32([keypoints_image[m.trainIdx].pt for m in good_matches]).reshape(-1, 1, 2)
+
+    # Find homography
+    homography, mask = cv2.findHomography(points_template, points_image, cv2.RANSAC)
+
+    if homography is not None:
+        # Use homography to warp template to align with image
+        height, width = image.shape
+        aligned_template = cv2.warpPerspective(template, homography, (width, height))
+
+        LOGGER.debug("Template aligned using homography.")
+
+        if show_plots:
+            # Draw matches
+            img_matches = cv2.drawMatches(
+                template,
+                keypoints_template,
+                image,
+                keypoints_image,
+                good_matches,
+                None,
+                flags=cv2.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS,
+            )
+            plt.figure(figsize=(12, 6))
+            plt.imshow(img_matches)
+            plt.title("Feature Matches")
+            plt.axis("off")
+            plt.show()
+
+        return aligned_template, homography
+    else:
+        LOGGER.debug("Homography could not be computed. Returning original template.")
+        return template, None
 
 
 def template_match(image, template, method=cv2.TM_CCOEFF_NORMED, align=True, show_plots=False):
@@ -31,9 +105,8 @@ def template_match(image, template, method=cv2.TM_CCOEFF_NORMED, align=True, sho
     Parameters:
         image (numpy.ndarray): Grayscale image where we search for the template.
         template (numpy.ndarray): Grayscale template image to search for.
-        method (int): Template matching method (not used in this approach).
+        method (int): Template matching method.
         align (bool): If True, aligns the template to the image before matching.
-
         show_plots (bool): If True, displays plots of intermediate steps.
 
     Returns:
@@ -41,6 +114,15 @@ def template_match(image, template, method=cv2.TM_CCOEFF_NORMED, align=True, sho
         location (tuple): Top-left corner of the best match (set to (0,0) in this approach).
         size (tuple): Size of the cropped region used in matching.
     """
+    # **Add Dimension Checks**
+    if image.ndim != 2:
+        LOGGER.error(f"Expected 2D grayscale image, but got {image.ndim} dimensions: {image.shape}")
+        raise ValueError("Input image must be a 2D grayscale image.")
+
+    if template.ndim != 2:
+        LOGGER.error(f"Expected 2D grayscale template, but got {template.ndim} dimensions: {template.shape}")
+        raise ValueError("Template must be a 2D grayscale image.")
+
     # Step 1: Determine the cropping size
     img_height, img_width = image.shape
     tmpl_height, tmpl_width = template.shape
@@ -79,9 +161,8 @@ def template_match(image, template, method=cv2.TM_CCOEFF_NORMED, align=True, sho
         aligned_template = template_cropped
 
     # Step 4: Compute similarity between the aligned images
-    # We'll use normalized cross-correlation as an example
-    match_value = cv2.matchTemplate(image_cropped, aligned_template, cv2.TM_CCOEFF_NORMED)
-    min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(match_value)
+    match_result = cv2.matchTemplate(image_cropped, aligned_template, method)
+    min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(match_result)
     similarity = max_val  # Since we're using TM_CCOEFF_NORMED
 
     LOGGER.debug(f"Similarity between aligned images: {similarity}")
@@ -93,91 +174,39 @@ def template_match(image, template, method=cv2.TM_CCOEFF_NORMED, align=True, sho
     return similarity, location, size
 
 
-def align_images(template, image, show_plots=False):
+def get_templates_from_subfolder(base_folder, subfolder, extensions=("*.png", "*.PNG")):
     """
-    Aligns the template to the image using feature matching and homography.
+    Retrieves a list of template file paths from a specified subfolder within the base folder.
 
     Parameters:
-        template (numpy.ndarray): Grayscale template image.
-        image (numpy.ndarray): Grayscale image to align with.
-        debug (bool): If True, prints debug information.
-        show_plots (bool): If True, displays plots of matching keypoints.
+        base_folder (str): The base directory containing subfolders with templates.
+        subfolder (str): The subdirectory name (e.g., 'ticked', 'uncircled', 'unticked').
+        extensions (tuple): File extensions to include.
 
     Returns:
-        aligned_template (numpy.ndarray): Template aligned to the image.
-        homography (numpy.ndarray): Homography matrix used for alignment.
+        list: List of full paths to template files.
     """
-    # Initialize ORB detector
-    orb = cv2.ORB_create(nfeatures=500)
+    # Construct the path to the subfolder
+    folder_path = os.path.join(base_folder, subfolder)
 
-    # Find the keypoints and descriptors with ORB
-    keypoints_template, descriptors_template = orb.detectAndCompute(template, None)
-    keypoints_image, descriptors_image = orb.detectAndCompute(image, None)
+    # Verify that the subfolder exists
+    if not os.path.isdir(folder_path):
+        LOGGER.error(f"Subfolder '{subfolder}' does not exist in '{base_folder}'.")
+        return []
 
-    if descriptors_template is None or descriptors_image is None:
+    # Initialize an empty list to store template paths
+    template_files = []
 
-        LOGGER.debug("Descriptors not found. Returning original template.")
-        return template, None
+    # Iterate over the specified extensions to find matching files
+    for ext in extensions:
+        # Use glob to find files with the current extension
+        matched_files = glob.glob(os.path.join(folder_path, ext))
+        template_files.extend(matched_files)
 
-    # Match descriptors
-    bf = cv2.BFMatcher(cv2.NORM_HAMMING)
-    matches = bf.knnMatch(descriptors_template, descriptors_image, k=2)
+    # Log the number of templates found
+    LOGGER.info(f"Found {len(template_files)} templates in '{folder_path}'.")
 
-    # Apply ratio test
-    good_matches = []
-    ratio_threshold = 0.75
-    for match in matches:
-        if len(match) == 2:
-            m, n = match
-            if m.distance < ratio_threshold * n.distance:
-                good_matches.append(m)
-        elif len(match) == 1:
-            # Optional: Handle single matches if desired
-
-            LOGGER.debug("Only one match found for a descriptor; skipping ratio test.")
-            # You can implement additional logic here if needed
-
-    if len(good_matches) < 4:
-
-        LOGGER.debug("Not enough good matches found. Returning original template.")
-        return template, None
-
-    # Extract location of good matches
-    points_template = np.float32([keypoints_template[m.queryIdx].pt for m in good_matches]).reshape(-1, 1, 2)
-    points_image = np.float32([keypoints_image[m.trainIdx].pt for m in good_matches]).reshape(-1, 1, 2)
-
-    # Find homography
-    homography, mask = cv2.findHomography(points_template, points_image, cv2.RANSAC)
-
-    if homography is not None:
-        # Use homography to warp template to align with image
-        height, width = image.shape
-        aligned_template = cv2.warpPerspective(template, homography, (width, height))
-
-        LOGGER.debug("Template aligned using homography.")
-
-        if show_plots:
-            # Draw matches
-            img_matches = cv2.drawMatches(
-                template,
-                keypoints_template,
-                image,
-                keypoints_image,
-                good_matches,
-                None,
-                flags=cv2.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS,
-            )
-            plt.figure(figsize=(12, 6))
-            plt.imshow(img_matches)
-            plt.title("Feature Matches")
-            plt.axis("off")
-            plt.show()
-
-        return aligned_template, homography
-    else:
-
-        LOGGER.debug("Homography could not be computed. Returning original template.")
-        return template, None
+    return template_files
 
 
 def detect_templates(
@@ -191,7 +220,21 @@ def detect_templates(
     align=True,
 ):
     """
-    Detects templates in the image and returns the highest match value.
+    Detects templates in the image and returns the detection status and confidence.
+
+    Parameters:
+        image_gray (numpy.ndarray): Grayscale image.
+        templates (list): List of template file paths.
+        label (str): Label for logging and display purposes.
+        threshold (float): Threshold for detection (0-100).
+        show_plots (bool): If True, displays matching results.
+        method (int): Template matching method.
+        allow_resize (bool): If True, allows resizing of templates.
+        align (bool): If True, aligns the templates to the image before matching.
+
+    Returns:
+        detected (bool): True if detection is above threshold.
+        confidence (float): Confidence value.
     """
     max_match_value = None
     best_template = None
@@ -199,28 +242,56 @@ def detect_templates(
     best_size = None
 
     for template_path in templates:
-        tmpl = cv2.imread(template_path, 0)
+        tmpl = cv2.imread(template_path, cv2.IMREAD_GRAYSCALE)
         if tmpl is None:
-            raise ValueError(f"Template image not found: {template_path}")
+            LOGGER.error(f"Template image not found or failed to load: {template_path}")
+            continue  # Skip to the next template
+
+        if tmpl.ndim != 2:
+            LOGGER.error(f"Template '{template_path}' is not a valid grayscale image. It has {tmpl.ndim} dimensions.")
+            continue  # Skip to the next template
 
         # Skip resizing in this approach
-
         LOGGER.debug("Skipping resizing of templates.")
 
         # Perform template matching with cropping and alignment
-        match_value, location, size = template_match(
-            image_gray, tmpl, method=method, align=align, show_plots=show_plots
-        )
+        try:
+            match_value, location, size = template_match(
+                image_gray, tmpl, method=method, align=align, show_plots=show_plots
+            )
+        except ValueError as ve:
+            LOGGER.error(f"Error in template_match: {ve}")
+            continue  # Skip to the next template
 
-        # Update best match
-        if max_match_value is None or match_value > max_match_value:
+        # Update best match based on the matching method
+        if max_match_value is None:
             max_match_value = match_value
             best_template = template_path
             best_location = location
             best_size = size
-    LOGGER.debug(f"Template '{best_template}' has best match with value: {max_match_value}")
+        else:
+            if method in [cv2.TM_SQDIFF, cv2.TM_SQDIFF_NORMED]:
+                # Lower values are better
+                if match_value < max_match_value:
+                    max_match_value = match_value
+                    best_template = template_path
+                    best_location = location
+                    best_size = size
+            else:
+                # Higher values are better
+                if match_value > max_match_value:
+                    max_match_value = match_value
+                    best_template = template_path
+                    best_location = location
+                    best_size = size
+
+    if best_template is not None:
+        LOGGER.debug(f"Template '{best_template}' has best match with value: {max_match_value}")
+    else:
+        LOGGER.debug("No valid template matches found.")
+
     # Compute confidence
-    confidence = max_match_value * 100  # Since match_value is between -1 and 1 for TM_CCOEFF_NORMED
+    confidence = compute_confidence_from_match(max_match_value) if max_match_value is not None else 0  # 0 to 100
 
     detected = confidence >= threshold * 100
 
@@ -264,14 +335,14 @@ def detect_text_circle(image_gray, text_bbox=None, show_plots=False):
             output = cv2.cvtColor(roi, cv2.COLOR_GRAY2BGR)
             for circle in circles[0, :]:
                 cx, cy, radius = map(int, circle)
-                LOGGER.debug(f"Circles detected with centre at {(cx, cy,)} and radius {radius}")
+                LOGGER.debug(f"Circles detected with centre at {(cx, cy)} and radius {radius}")
                 cv2.circle(output, (cx, cy), radius, (0, 255, 0), 2)
+            plt.figure(figsize=(6, 6))
             plt.imshow(output)
             plt.title("Detected Circles Around Text")
             plt.axis("off")
             plt.show()
     else:
-
         LOGGER.debug("No circles detected around text.")
 
     return detected, confidence
@@ -393,175 +464,6 @@ def detect_tick_marks(checkbox_roi, show_plots=False):
     return detected, confidence
 
 
-def process_image(image_path, threshold=60, show_plots=False):
-    """
-    Main function to process the image and perform all detection tasks.
-    """
-    if not os.path.isfile(image_path):
-        raise FileNotFoundError(f"Image file not found: {image_path}")
-
-    # Load and preprocess the image
-    image = cv2.imread(image_path)
-    if image is None:
-        raise ValueError(f"Failed to load image at path: {image_path}")
-    LOGGER.info(f"\n\n processing image \t {image_path}")
-    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-
-    # Initialize the results dictionary
-    results = {}
-
-    # Detect if text is not circled using templates
-    templates_not_circled = [
-        "template_yes.PNG",
-        "template_yes_2.PNG",
-        "template_yes_3.PNG",
-        "template_no.PNG",
-        "template_no_2.PNG",
-        "template_no_3.PNG",
-        "template_no_4.PNG",
-        "template_no_5.PNG",
-    ]
-    LOGGER.debug("comparing against templates of not circled yes/no")
-    detected_not_circled, confidence_not_circled = detect_templates(
-        gray,
-        templates_not_circled,
-        label="Not Circled Text",
-        show_plots=show_plots,
-        threshold=threshold / 100,
-    )
-    results["not_circled"] = {
-        "detected": detected_not_circled,
-        "confidence": confidence_not_circled,
-        "test": "Text not circled using templates",
-    }
-
-    # Detect if checkbox is ticked using templates
-    templates_checked = [
-        "template_yes_check_4.PNG",
-        "template_yes_check_2.PNG",
-        "template_yes_check_3.PNG",
-        "template_yes_check.PNG",
-        "template_no_check.PNG",
-        "template_no_check_2.PNG",
-        "template_yes_check_hand.PNG",
-        "template_no_check_hand.PNG",
-        "template_no_check_hand_2.PNG",
-    ]
-    LOGGER.debug("comparing against templates of ticked yes/no")
-    detected_checked, confidence_checked = detect_templates(
-        gray,
-        templates_checked,
-        label="Checked Checkbox",
-        show_plots=show_plots,
-        threshold=threshold / 100,
-    )
-    results["checkbox_checked"] = {
-        "detected": detected_checked,
-        "confidence": confidence_checked,
-        "test": "Checkbox checked using templates",
-    }
-
-    # Detect if checkbox is not ticked using templates
-    templates_unchecked = [
-        "template_yes_uncheck.PNG",
-        "template_yes_uncheck_2.PNG",
-        "template_yes_uncheck_3.PNG",
-        "template_yes_uncheck_4.PNG",
-        "template_yes_uncheck_5.PNG",
-        "template_no_uncheck.PNG",
-        "template_no_uncheck_2.PNG",
-        "template_no_uncheck_3.PNG",
-        "template_no_uncheck_4.PNG",
-        "template_no_uncheck_5.PNG",
-        "template_no_uncheck_6.PNG",
-    ]
-    LOGGER.debug("comparing against templates of not ticked yes/no")
-    detected_unchecked, confidence_unchecked = detect_templates(
-        gray,
-        templates_unchecked,
-        label="Unchecked Checkbox",
-        show_plots=show_plots,
-        threshold=threshold / 100,
-    )
-    results["checkbox_unchecked"] = {
-        "detected": detected_unchecked,
-        "confidence": confidence_unchecked,
-        "test": "Checkbox unchecked using templates",
-    }
-
-    # Detect if text is circled
-    detected_circled, confidence_circled = detect_text_circle(gray, text_bbox=None, show_plots=show_plots)
-    results["circled"] = {
-        "detected": detected_circled,
-        "confidence": confidence_circled,
-        "test": "Text circled detection",
-    }
-
-    # Detect tick marks in checkbox area
-    # For this, we need to identify the checkbox area first
-    # Assuming the checkbox is detected via template matching
-    # We will use the location from the 'checkbox_checked' detection if available
-
-    checkbox_area = None
-    if detected_checked:
-        # Load the template
-        tmpl_checked = cv2.imread(templates_checked[0], 0)
-        if tmpl_checked is None:
-            raise ValueError(f"Template image not found: {templates_checked[0]}")
-
-        # Perform template matching
-        _, location, size = template_match(gray, tmpl_checked)
-        x, y = location
-        w, h = size
-        checkbox_area = gray[y : y + h, x : x + w]
-
-    elif detected_unchecked:
-        # Load the template
-        tmpl_unchecked = cv2.imread(templates_unchecked[0], 0)
-        if tmpl_unchecked is None:
-            raise ValueError(f"Template image not found: {templates_unchecked[0]}")
-
-        # Perform template matching
-        _, location, size = template_match(gray, tmpl_unchecked)
-        x, y = location
-        w, h = size
-        checkbox_area = gray[y : y + h, x : x + w]
-
-    if checkbox_area is not None:
-        detected_tick_marks, confidence_tick_marks = detect_tick_marks(checkbox_area, show_plots=show_plots)
-    else:
-        detected_tick_marks = False
-        confidence_tick_marks = 0
-
-    results["tick_marks"] = {
-        "detected": detected_tick_marks,
-        "confidence": confidence_tick_marks,
-        "test": "Tick marks in checkbox area",
-    }
-
-    # Aggregate the confidence values
-    confidences = [
-        ("not_circled", confidence_not_circled),
-        ("checkbox_checked", confidence_checked),
-        ("checkbox_unchecked", confidence_unchecked),
-        ("circled", confidence_circled),
-        ("tick_marks", confidence_tick_marks),
-    ]
-
-    # Use the new function to determine the final result
-    final_result, test_performed, confidence = determine_final_result(confidences, threshold)
-
-    # Prepare the return payload
-    payload = {
-        "confidence": confidence,
-        "final_result": final_result,
-        "test_performed": test_performed,
-        "all_attempts": results,
-    }
-
-    return payload
-
-
 def determine_final_result(confidences, threshold):
     """
     Determines the final result based on the confidences of different tests.
@@ -604,7 +506,7 @@ def determine_final_result(confidences, threshold):
         final_result = False
     else:
         # No detections meet the threshold
-        # Optionally, select the test with the highest confidence
+        # Select the test with the highest confidence regardless of threshold
         test_performed, confidence = max(confidences, key=lambda x: x[1])
         final_result = False  # Default to False when uncertain
 
@@ -706,3 +608,318 @@ def annotate_image(image, result_payload, output_path, file_name_prefix="result"
     LOGGER.info(f"Annotated image saved to {output_file_path}")
 
     return output_file_path
+
+
+def process_image(image_path, threshold=60, show_plots=False):
+    """
+    Main function to process the image and perform all detection tasks.
+
+    Parameters:
+        image_path (str): Path to the image to process.
+        threshold (int): Threshold for detection (0-100).
+        show_plots (bool): If True, displays matching results.
+
+    Returns:
+        dict: Payload containing detection results and confidences.
+    """
+    if not os.path.isfile(image_path):
+        raise FileNotFoundError(f"Image file not found: {image_path}")
+
+    # **Load the image in grayscale directly to avoid potential issues**
+    image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
+    if image is None:
+        raise ValueError(f"Failed to load image at path: {image_path}")
+    LOGGER.info(f"\n\nProcessing image: {image_path}")
+
+    # Initialize the results dictionary
+    results = {}
+
+    # Define base templates directory
+    BASE_TEMPLATES_DIR = "templates"
+
+    # Gather templates from subfolders
+    templates_not_circled = get_templates_from_subfolder(BASE_TEMPLATES_DIR, "uncircled")
+    templates_checked = get_templates_from_subfolder(BASE_TEMPLATES_DIR, "ticked")
+    templates_unchecked = get_templates_from_subfolder(BASE_TEMPLATES_DIR, "unticked")
+
+    # Detect if text is not circled using templates
+    if templates_not_circled:
+        LOGGER.debug("Comparing against templates of not circled yes/no")
+        detected_not_circled, confidence_not_circled = detect_templates(
+            image,
+            templates_not_circled,
+            label="Not Circled Text",
+            show_plots=show_plots,
+            threshold=threshold / 100,
+        )
+        results["not_circled"] = {
+            "detected": detected_not_circled,
+            "confidence": confidence_not_circled,
+            "test": "Text not circled using templates",
+        }
+    else:
+        LOGGER.warning("No templates found in 'uncircled' subfolder.")
+        results["not_circled"] = {
+            "detected": False,
+            "confidence": 0,
+            "test": "Text not circled using templates (No templates available)",
+        }
+
+    # Detect if checkbox is ticked using templates
+    if templates_checked:
+        LOGGER.debug("Comparing against templates of ticked yes/no")
+        detected_checked, confidence_checked = detect_templates(
+            image,
+            templates_checked,
+            label="Checked Checkbox",
+            show_plots=show_plots,
+            threshold=threshold / 100,
+        )
+        results["checkbox_checked"] = {
+            "detected": detected_checked,
+            "confidence": confidence_checked,
+            "test": "Checkbox checked using templates",
+        }
+    else:
+        LOGGER.warning("No templates found in 'ticked' subfolder.")
+        results["checkbox_checked"] = {
+            "detected": False,
+            "confidence": 0,
+            "test": "Checkbox checked using templates (No templates available)",
+        }
+
+    # Detect if checkbox is not ticked using templates
+    if templates_unchecked:
+        LOGGER.debug("Comparing against templates of not ticked yes/no")
+        detected_unchecked, confidence_unchecked = detect_templates(
+            image,
+            templates_unchecked,
+            label="Unchecked Checkbox",
+            show_plots=show_plots,
+            threshold=threshold / 100,
+        )
+        results["checkbox_unchecked"] = {
+            "detected": detected_unchecked,
+            "confidence": confidence_unchecked,
+            "test": "Checkbox unchecked using templates",
+        }
+    else:
+        LOGGER.warning("No templates found in 'unticked' subfolder.")
+        results["checkbox_unchecked"] = {
+            "detected": False,
+            "confidence": 0,
+            "test": "Checkbox unchecked using templates (No templates available)",
+        }
+
+    # Detect if text is circled
+    detected_circled, confidence_circled = detect_text_circle(image, text_bbox=None, show_plots=show_plots)
+    results["circled"] = {
+        "detected": detected_circled,
+        "confidence": confidence_circled,
+        "test": "Text circled detection",
+    }
+
+    # Detect tick marks in checkbox area
+    # For this, we need to identify the checkbox area first
+    # Assuming the checkbox is detected via template matching
+    # We will use the location from the 'checkbox_checked' detection if available
+
+    checkbox_area = None
+    if detected_checked and templates_checked:
+        # Load the first template from the 'ticked' subfolder
+        tmpl_checked = cv2.imread(templates_checked[0], cv2.IMREAD_GRAYSCALE)
+        if tmpl_checked is None:
+            LOGGER.error(f"Template image not found or failed to load: {templates_checked[0]}")
+            raise ValueError(f"Template image not found or failed to load: {templates_checked[0]}")
+
+        # Perform template matching to find the checkbox area
+        try:
+            match_value, location, size = template_match(image, tmpl_checked)
+            x, y = location
+            w, h = size
+            checkbox_area = image[y : y + h, x : x + w]
+            LOGGER.debug(f"Checkbox area located at (x: {x}, y: {y}, w: {w}, h: {h})")
+        except ValueError as ve:
+            LOGGER.error(f"Error in template_match while locating checkbox: {ve}")
+    elif detected_unchecked and templates_unchecked:
+        # Load the first template from the 'unticked' subfolder
+        tmpl_unchecked = cv2.imread(templates_unchecked[0], cv2.IMREAD_GRAYSCALE)
+        if tmpl_unchecked is None:
+            LOGGER.error(f"Template image not found or failed to load: {templates_unchecked[0]}")
+            raise ValueError(f"Template image not found or failed to load: {templates_unchecked[0]}")
+
+        # Perform template matching to find the checkbox area
+        try:
+            match_value, location, size = template_match(image, tmpl_unchecked)
+            x, y = location
+            w, h = size
+            checkbox_area = image[y : y + h, x : x + w]
+            LOGGER.debug(f"Checkbox area located at (x: {x}, y: {y}, w: {w}, h: {h})")
+        except ValueError as ve:
+            LOGGER.error(f"Error in template_match while locating checkbox: {ve}")
+
+    if checkbox_area is not None:
+        detected_tick_marks, confidence_tick_marks = detect_tick_marks(checkbox_area, show_plots=show_plots)
+    else:
+        detected_tick_marks = False
+        confidence_tick_marks = 0
+        LOGGER.debug("Checkbox area not detected; skipping tick marks detection.")
+
+    results["tick_marks"] = {
+        "detected": detected_tick_marks,
+        "confidence": confidence_tick_marks,
+        "test": "Tick marks in checkbox area",
+    }
+
+    # Aggregate the confidence values
+    confidences = [
+        ("not_circled", confidence_not_circled),
+        ("checkbox_checked", confidence_checked),
+        ("checkbox_unchecked", confidence_unchecked),
+        ("circled", confidence_circled),
+        ("tick_marks", confidence_tick_marks),
+    ]
+
+    # Use the new function to determine the final result
+    final_result, test_performed, confidence = determine_final_result(confidences, threshold)
+
+    # Prepare the return payload
+    payload = {
+        "confidence": confidence,
+        "final_result": final_result,
+        "test_performed": test_performed,
+        "all_attempts": results,
+    }
+
+    return payload
+
+
+def annotate_image(image, result_payload, output_path, file_name_prefix="result"):
+    """
+    Adds an annotation to the image based on the overall detection result and saves it.
+    Reduces the font size to fit the text within the image width without scaling the image.
+
+    Parameters:
+        image (numpy.ndarray): The original image.
+        result_payload (dict): The result from the process_image function.
+        output_path (str): Directory where the annotated image will be saved.
+        file_name_prefix (str): Prefix for the output file name.
+
+    Returns:
+        output_file_path (str): The path to the saved annotated image.
+    """
+    # Extract the overall detection result
+    final_result = result_payload.get("final_result", False)
+    test_performed = result_payload.get("test_performed", "")
+    confidence = result_payload.get("confidence", 0)
+
+    # Map test_performed to readable message
+    test_messages = {
+        "circled": "Circled",
+        "not_circled": "Not Circled",
+        "checkbox_checked": "Ticked",
+        "checkbox_unchecked": "Not Ticked",
+        "tick_marks": "Tick Marks Detected",
+    }
+
+    # Default to 'Unknown' if test_performed is not recognized
+    annotation_text = test_messages.get(test_performed, "Unknown")
+
+    # Prepare the annotation text with confidence
+    annotation = f"{annotation_text} ({confidence:.1f}%)"
+
+    # Set color based on final result
+    if final_result:
+        color = (0, 0, 255)  # Red for positive detection
+    else:
+        color = (0, 255, 0)  # Green for negative detection
+
+    # Add the annotation to the image
+    annotated_image = image.copy()
+    img_height, img_width = annotated_image.shape[:2]
+
+    # Starting position for the text
+    x_start = 10
+    y_start = 30
+
+    # Initial font scale and thickness
+    font_scale = 1.0
+    thickness = 1
+    font = cv2.FONT_HERSHEY_SIMPLEX
+
+    # Get text size
+    text_size, _ = cv2.getTextSize(annotation, font, font_scale, thickness)
+    text_width = text_size[0]
+
+    # Minimum font scale to maintain readability
+    MIN_FONT_SCALE = 0.3
+
+    # Calculate the maximum allowed width for the text
+    max_text_width = img_width - 20  # Leave some margin
+
+    # Scale down font if text is wider than image
+    while text_width > max_text_width and font_scale > MIN_FONT_SCALE:
+        font_scale -= 0.1
+        text_size, _ = cv2.getTextSize(annotation, font, font_scale, thickness)
+        text_width = text_size[0]
+
+    # Check if font scale is above minimum threshold
+    if font_scale < MIN_FONT_SCALE:
+        font_scale = MIN_FONT_SCALE
+        text_size, _ = cv2.getTextSize(annotation, font, font_scale, thickness)
+        text_width = text_size[0]
+
+    # Adjust y position if text exceeds image height
+    if y_start + text_size[1] > img_height - 10:
+        LOGGER.debug("Annotation exceeds image height; cannot add annotation.")
+    else:
+        # Add text to the image
+        cv2.putText(annotated_image, annotation, (x_start, y_start), font, font_scale, color, thickness, cv2.LINE_AA)
+
+    # Ensure the output directory exists
+    os.makedirs(output_path, exist_ok=True)
+
+    # Prepare the output file path
+    output_file_name = f"{file_name_prefix}_annotated.png"
+    output_file_path = os.path.join(output_path, output_file_name)
+
+    # Save the annotated image
+    cv2.imwrite(output_file_path, annotated_image)
+
+    LOGGER.info(f"Annotated image saved to {output_file_path}")
+
+    return output_file_path
+
+
+# Example usage of the corrected code
+if __name__ == "__main__":
+    # Example variables (replace these with your actual paths and filenames)
+    full_file_path = "path_to_your_image.PNG"  # Replace with your actual image path
+    filename = "your_image.PNG"  # Replace with your actual filename
+    threshold = 60  # Confidence threshold (0-100)
+
+    try:
+        # Process the image
+        result_payload = process_image(full_file_path, threshold=threshold, show_plots=False)
+        LOGGER.info(f"Detection Payload: {result_payload}")
+
+        # Save the resulting images with green or red text
+        output_directory = "results"
+        file_name_prefix = os.path.splitext(os.path.basename(filename))[0]  # Use the original file name as prefix
+
+        # Load the original image in color for annotation
+        image_color = cv2.imread(full_file_path)
+        if image_color is None:
+            raise ValueError(f"Failed to load image in color at path: {full_file_path}")
+
+        # Annotate and save the image
+        annotated_image_path = annotate_image(
+            image=image_color,
+            result_payload=result_payload,
+            output_path=output_directory,
+            file_name_prefix=file_name_prefix,
+        )
+        LOGGER.info(f"Annotated image saved at: {annotated_image_path}")
+
+    except Exception as e:
+        LOGGER.error(f"An error occurred: {e}")
