@@ -17,80 +17,132 @@ def compute_confidence_from_match(match_value):
     return match_value * 100
 
 
-def template_match(image, template, method=cv2.TM_CCOEFF_NORMED):
+def template_match(image, template, method=cv2.TM_CCOEFF_NORMED, align=True):
     """
-    Performs template matching and returns the maximum match value and location.
-    Resizes the template if it is larger than the image.
+    Performs template matching, optionally aligning the template to the image.
 
     Parameters:
         image (numpy.ndarray): Grayscale image where we search for the template.
         template (numpy.ndarray): Grayscale template image to search for.
         method (int): Template matching method.
+        align (bool): If True, aligns the template to the image before matching.
 
     Returns:
-        max_val (float): Maximum match value.
-        max_loc (tuple): Location of the best match.
-        template_size (tuple): Size of the template used for matching.
+        match_value (float): Match value from template matching.
+        location (tuple): Top-left corner of the best match.
+        size (tuple): Size of the template used in matching.
     """
-    img_height, img_width = image.shape[:2]
-    tmpl_height, tmpl_width = template.shape[:2]
+    if align:
+        aligned_template, homography = align_template(image, template)
+        template_to_use = aligned_template
+    else:
+        template_to_use = template
 
-    LOGGER.debug(f"Image size: {img_width}x{img_height}")
-    LOGGER.debug(f"Template size before resizing: {tmpl_width}x{tmpl_height}")
-
-    # Check if template is larger than image and resize if necessary
+    # Ensure template is not larger than the image
+    img_height, img_width = image.shape
+    tmpl_height, tmpl_width = template_to_use.shape
     if tmpl_height > img_height or tmpl_width > img_width:
-        scale_factor = min(img_height / tmpl_height, img_width / tmpl_width)
-        new_width = max(int(tmpl_width * scale_factor), 1)
-        new_height = max(int(tmpl_height * scale_factor), 1)
-        template = cv2.resize(template, (new_width, new_height), interpolation=cv2.INTER_AREA)
-        tmpl_height, tmpl_width = template.shape[:2]
-        if tmpl_height == 0 or tmpl_width == 0:
-            raise ValueError("Template size after resizing is zero. Cannot perform template matching.")
 
-        LOGGER.debug(f"Resized template size: {tmpl_width}x{tmpl_height}")
+        LOGGER.debug("Template is larger than image. Resizing is required.")
+        # Optionally, you can disable resizing here based on a condition
+        # For now, let's proceed to match without resizing
+        pass
 
-    res = cv2.matchTemplate(image, template, method)
+    res = cv2.matchTemplate(image, template_to_use, method)
     min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(res)
-    return max_val, max_loc, template.shape[::-1]  # Return match value, location, and template size
+
+    if method in [cv2.TM_SQDIFF, cv2.TM_SQDIFF_NORMED]:
+        match_value = min_val
+        location = min_loc
+    else:
+        match_value = max_val
+        location = max_loc
+
+    size = (tmpl_width, tmpl_height)
+    return match_value, location, size
 
 
-def detect_templates(image_gray, templates, label, threshold=0.6, show_plots=False):
+def detect_templates(
+    image_gray,
+    templates,
+    label,
+    threshold=0.6,
+    show_plots=False,
+    method=cv2.TM_CCOEFF_NORMED,
+    allow_resize=True,
+    align=True,
+):
     """
     Detects templates in the image and returns the highest match value.
+
+    Parameters:
+        image_gray (numpy.ndarray): Grayscale image.
+        templates (list): List of template file paths.
+        label (str): Label for logging and display purposes.
+        threshold (float): Threshold for detection.
+        show_plots (bool): If True, displays matching results.
+        method (int): Template matching method.
+        allow_resize (bool): If True, allows resizing of templates.
+        align (bool): If True, aligns the templates to the image before matching.
+
+    Returns:
+        detected (bool): True if detection is above threshold.
+        confidence (float): Confidence value.
     """
-    max_match_value = 0
+    max_match_value = None
     best_template = None
     best_location = None
     best_size = None
-    for template in templates:
-        tmpl = cv2.imread(template, 0)
+
+    for template_path in templates:
+        tmpl = cv2.imread(template_path, 0)
         if tmpl is None:
-            raise ValueError(f"Template image not found: {template}")
+            raise ValueError(f"Template image not found: {template_path}")
 
-        # Resize template if it's larger than the image
-        img_height, img_width = image_gray.shape
-        tmpl_height, tmpl_width = tmpl.shape
-        if tmpl_height > img_height or tmpl_width > img_width:
-            scale_factor = min(img_height / tmpl_height, img_width / tmpl_width, 1.0)
-            new_width = int(tmpl_width * scale_factor)
-            new_height = int(tmpl_height * scale_factor)
-            tmpl = cv2.resize(tmpl, (new_width, new_height), interpolation=cv2.INTER_AREA)
+        # Optionally disable resizing
+        if allow_resize:
+            # Resize template if it's larger than the image
+            img_height, img_width = image_gray.shape
+            tmpl_height, tmpl_width = tmpl.shape
+            if tmpl_height > img_height or tmpl_width > img_width:
+                scale_factor = min(img_height / tmpl_height, img_width / tmpl_width, 1.0)
+                new_width = max(int(tmpl_width * scale_factor), 1)
+                new_height = max(int(tmpl_height * scale_factor), 1)
+                tmpl = cv2.resize(tmpl, (new_width, new_height), interpolation=cv2.INTER_AREA)
 
-            LOGGER.debug(f"Resized template '{template}' to ({new_width}, {new_height})")
+                LOGGER.debug(f"Resized template '{template_path}' to ({new_width}, {new_height})")
+                if show_plots:
+                    # Plot the resized template
+                    plt.figure()
+                    plt.imshow(tmpl, cmap='gray')
+                    plt.title(f"Resized Template '{template_path}'")
+                    plt.axis('off')
+                    plt.show()
+        else:
 
-        match_value, location, size = template_match(image_gray, tmpl)
+            LOGGER.debug("Resizing of templates is disabled.")
 
-        LOGGER.debug(f"Template '{template}' match value: {match_value}")
-        if match_value > max_match_value:
+        # Perform template matching with optional alignment
+        match_value, location, size = template_match(image_gray, tmpl, method=method, align=align)
+
+        
+
+        # Update best match
+        if max_match_value is None or (
+            (method in [cv2.TM_SQDIFF, cv2.TM_SQDIFF_NORMED] and match_value < max_match_value)
+            or (method not in [cv2.TM_SQDIFF, cv2.TM_SQDIFF_NORMED] and match_value > max_match_value)
+        ):
             max_match_value = match_value
-            best_template = template
+            best_template = template_path
             best_location = location
             best_size = size
+    LOGGER.debug(f"Best match with template '{best_template}' match value: {max_match_value}")
 
-    confidence = compute_confidence_from_match(max_match_value)
+    # Compute confidence
+    confidence = compute_confidence_from_match(max_match_value, method)
     detected = confidence >= threshold * 100
 
+    # Visualization code (unchanged)
     if show_plots and best_template is not None and best_location is not None:
         top_left = best_location
         w, h = best_size
@@ -262,7 +314,7 @@ def detect_tick_marks(checkbox_roi, show_plots=False):
     return detected, confidence
 
 
-def process_image(image_path, threshold=60, show_plots=False):
+def process_image(image_path, threshold=60, show_plots=False, allow_resize=False, align=False):
     """
     Main function to process the image and perform all detection tasks.
     """
@@ -294,8 +346,11 @@ def process_image(image_path, threshold=60, show_plots=False):
         gray,
         templates_not_circled,
         label="Not Circled Text",
-        show_plots=show_plots,
         threshold=threshold / 100,
+        show_plots=show_plots,
+        method=cv2.TM_CCOEFF_NORMED,
+        allow_resize=allow_resize,
+        align=align,
     )
     results["not_circled"] = {
         "detected": detected_not_circled,
@@ -305,6 +360,8 @@ def process_image(image_path, threshold=60, show_plots=False):
 
     # Detect if checkbox is ticked using templates
     templates_checked = [
+        "template_yes_check_6.PNG",
+        "template_yes_check_5.PNG",
         "template_yes_check_4.PNG",
         "template_yes_check_2.PNG",
         "template_yes_check_3.PNG",
@@ -321,6 +378,9 @@ def process_image(image_path, threshold=60, show_plots=False):
         label="Checked Checkbox",
         show_plots=show_plots,
         threshold=threshold / 100,
+        method=cv2.TM_CCOEFF_NORMED,
+        allow_resize=allow_resize,
+        align=align,
     )
     results["checkbox_checked"] = {
         "detected": detected_checked,
@@ -348,6 +408,9 @@ def process_image(image_path, threshold=60, show_plots=False):
         label="Unchecked Checkbox",
         show_plots=show_plots,
         threshold=threshold / 100,
+        method=cv2.TM_CCOEFF_NORMED,
+        allow_resize=allow_resize,
+        align=align,
     )
     results["checkbox_unchecked"] = {
         "detected": detected_unchecked,
@@ -529,3 +592,80 @@ def annotate_image(image, result_payload, output_path, file_name_prefix="result"
     LOGGER.info(f"Annotated image saved to {output_file_path}")
 
     return output_file_path
+
+
+import cv2
+import numpy as np
+import logging
+
+LOGGER = logging.getLogger(__name__)
+
+
+def align_template(image, template):
+    """
+    Aligns the template to the image using feature matching and homography.
+
+    Parameters:
+        image (numpy.ndarray): Grayscale image where we search for the template.
+        template (numpy.ndarray): Grayscale template image to align.
+
+    Returns:
+        aligned_template (numpy.ndarray): Aligned template image.
+        homography (numpy.ndarray): Homography matrix used for alignment.
+    """
+    # Initialize ORB detector
+    orb = cv2.ORB_create(nfeatures=500)
+
+    # Find the keypoints and descriptors with ORB
+    keypoints_image, descriptors_image = orb.detectAndCompute(image, None)
+    keypoints_template, descriptors_template = orb.detectAndCompute(template, None)
+
+    if descriptors_image is None or descriptors_template is None:
+        # if debug:
+        LOGGER.debug("Descriptors not found. Returning original template.")
+        return template, None
+
+    # Match descriptors
+    bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
+    matches = bf.match(descriptors_template, descriptors_image)
+
+    if len(matches) < 4:
+        # if debug:
+        LOGGER.debug("Not enough matches found. Returning original template.")
+        return template, None
+
+    # Sort matches by distance (best matches first)
+    matches = sorted(matches, key=lambda x: x.distance)
+
+    # Extract location of good matches
+    points_template = np.zeros((len(matches), 2), dtype=np.float32)
+    points_image = np.zeros((len(matches), 2), dtype=np.float32)
+
+    for i, match in enumerate(matches):
+        points_template[i, :] = keypoints_template[match.queryIdx].pt
+        points_image[i, :] = keypoints_image[match.trainIdx].pt
+
+    # Find homography
+    homography, mask = cv2.findHomography(points_template, points_image, cv2.RANSAC)
+
+    if homography is not None:
+        # Use homography to warp template to align with image
+        height, width = image.shape
+        aligned_template = cv2.warpPerspective(template, homography, (width, height))
+        # if debug:
+        LOGGER.debug("Template aligned using homography.")
+        return aligned_template, homography
+    else:
+        # if debug:
+        LOGGER.debug("Homography could not be computed. Returning original template.")
+        return template, None
+
+
+def compute_confidence_from_match(match_value, method):
+    if method in [cv2.TM_SQDIFF, cv2.TM_SQDIFF_NORMED]:
+        # Lower values are better
+        confidence = (1 - match_value) * 100
+    else:
+        # Higher values are better
+        confidence = match_value * 100
+    return confidence
