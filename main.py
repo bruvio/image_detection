@@ -17,87 +17,220 @@ def compute_confidence_from_match(match_value):
     return match_value * 100
 
 
-def template_match(image, template, method=cv2.TM_CCOEFF_NORMED):
+import cv2
+import numpy as np
+import logging
+
+LOGGER = logging.getLogger(__name__)
+
+
+def template_match(image, template, method=cv2.TM_CCOEFF_NORMED, align=True, show_plots=False):
     """
-    Performs template matching and returns the maximum match value and location.
-    Resizes the template if it is larger than the image.
+    Performs template matching by cropping and aligning the template and the image.
 
     Parameters:
         image (numpy.ndarray): Grayscale image where we search for the template.
         template (numpy.ndarray): Grayscale template image to search for.
-        method (int): Template matching method.
+        method (int): Template matching method (not used in this approach).
+        align (bool): If True, aligns the template to the image before matching.
+
+        show_plots (bool): If True, displays plots of intermediate steps.
 
     Returns:
-        max_val (float): Maximum match value.
-        max_loc (tuple): Location of the best match.
-        template_size (tuple): Size of the template used for matching.
+        match_value (float): Similarity measure between the aligned images.
+        location (tuple): Top-left corner of the best match (set to (0,0) in this approach).
+        size (tuple): Size of the cropped region used in matching.
     """
-    img_height, img_width = image.shape[:2]
-    tmpl_height, tmpl_width = template.shape[:2]
+    # Step 1: Determine the cropping size
+    img_height, img_width = image.shape
+    tmpl_height, tmpl_width = template.shape
 
-    LOGGER.debug(f"Image size: {img_width}x{img_height}")
-    LOGGER.debug(f"Template size before resizing: {tmpl_width}x{tmpl_height}")
+    crop_height = min(img_height, tmpl_height)
+    crop_width = min(img_width, tmpl_width)
 
-    # Check if template is larger than image and resize if necessary
-    if tmpl_height > img_height or tmpl_width > img_width:
-        scale_factor = min(img_height / tmpl_height, img_width / tmpl_width)
-        new_width = max(int(tmpl_width * scale_factor), 1)
-        new_height = max(int(tmpl_height * scale_factor), 1)
-        template = cv2.resize(template, (new_width, new_height), interpolation=cv2.INTER_AREA)
-        tmpl_height, tmpl_width = template.shape[:2]
-        if tmpl_height == 0 or tmpl_width == 0:
-            raise ValueError("Template size after resizing is zero. Cannot perform template matching.")
+    LOGGER.debug(f"Cropping images to size: ({crop_width}, {crop_height})")
 
-        LOGGER.debug(f"Resized template size: {tmpl_width}x{tmpl_height}")
+    # Step 2: Crop the images from the center
+    def crop_center(img, cropx, cropy):
+        y, x = img.shape
+        startx = x // 2 - (cropx // 2)
+        starty = y // 2 - (cropy // 2)
+        return img[starty : starty + cropy, startx : startx + cropx]
 
-    res = cv2.matchTemplate(image, template, method)
-    min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(res)
-    return max_val, max_loc, template.shape[::-1]  # Return match value, location, and template size
+    image_cropped = crop_center(image, crop_width, crop_height)
+    template_cropped = crop_center(template, crop_width, crop_height)
+
+    if show_plots:
+        plt.figure()
+        plt.subplot(1, 2, 1)
+        plt.imshow(image_cropped, cmap="gray")
+        plt.title("Cropped Image")
+        plt.axis("off")
+        plt.subplot(1, 2, 2)
+        plt.imshow(template_cropped, cmap="gray")
+        plt.title("Cropped Template")
+        plt.axis("off")
+        plt.show()
+
+    # Step 3: Align the template to the image
+    if align:
+        aligned_template, homography = align_images(template_cropped, image_cropped, show_plots=show_plots)
+    else:
+        aligned_template = template_cropped
+
+    # Step 4: Compute similarity between the aligned images
+    # We'll use normalized cross-correlation as an example
+    match_value = cv2.matchTemplate(image_cropped, aligned_template, cv2.TM_CCOEFF_NORMED)
+    min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(match_value)
+    similarity = max_val  # Since we're using TM_CCOEFF_NORMED
+
+    LOGGER.debug(f"Similarity between aligned images: {similarity}")
+
+    # Since we have cropped and aligned the images, location is set to (0,0)
+    location = (0, 0)
+    size = (crop_width, crop_height)
+
+    return similarity, location, size
 
 
-def detect_templates(image_gray, templates, label, threshold=0.6, show_plots=False):
+def align_images(template, image, show_plots=False):
+    """
+    Aligns the template to the image using feature matching and homography.
+
+    Parameters:
+        template (numpy.ndarray): Grayscale template image.
+        image (numpy.ndarray): Grayscale image to align with.
+        debug (bool): If True, prints debug information.
+        show_plots (bool): If True, displays plots of matching keypoints.
+
+    Returns:
+        aligned_template (numpy.ndarray): Template aligned to the image.
+        homography (numpy.ndarray): Homography matrix used for alignment.
+    """
+    # Initialize ORB detector
+    orb = cv2.ORB_create(nfeatures=500)
+
+    # Find the keypoints and descriptors with ORB
+    keypoints_template, descriptors_template = orb.detectAndCompute(template, None)
+    keypoints_image, descriptors_image = orb.detectAndCompute(image, None)
+
+    if descriptors_template is None or descriptors_image is None:
+
+        LOGGER.debug("Descriptors not found. Returning original template.")
+        return template, None
+
+    # Match descriptors
+    bf = cv2.BFMatcher(cv2.NORM_HAMMING)
+    matches = bf.knnMatch(descriptors_template, descriptors_image, k=2)
+
+    # Apply ratio test
+    good_matches = []
+    ratio_threshold = 0.75
+    for match in matches:
+        if len(match) == 2:
+            m, n = match
+            if m.distance < ratio_threshold * n.distance:
+                good_matches.append(m)
+        elif len(match) == 1:
+            # Optional: Handle single matches if desired
+
+            LOGGER.debug("Only one match found for a descriptor; skipping ratio test.")
+            # You can implement additional logic here if needed
+
+    if len(good_matches) < 4:
+
+        LOGGER.debug("Not enough good matches found. Returning original template.")
+        return template, None
+
+    # Extract location of good matches
+    points_template = np.float32([keypoints_template[m.queryIdx].pt for m in good_matches]).reshape(-1, 1, 2)
+    points_image = np.float32([keypoints_image[m.trainIdx].pt for m in good_matches]).reshape(-1, 1, 2)
+
+    # Find homography
+    homography, mask = cv2.findHomography(points_template, points_image, cv2.RANSAC)
+
+    if homography is not None:
+        # Use homography to warp template to align with image
+        height, width = image.shape
+        aligned_template = cv2.warpPerspective(template, homography, (width, height))
+
+        LOGGER.debug("Template aligned using homography.")
+
+        if show_plots:
+            # Draw matches
+            img_matches = cv2.drawMatches(
+                template,
+                keypoints_template,
+                image,
+                keypoints_image,
+                good_matches,
+                None,
+                flags=cv2.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS,
+            )
+            plt.figure(figsize=(12, 6))
+            plt.imshow(img_matches)
+            plt.title("Feature Matches")
+            plt.axis("off")
+            plt.show()
+
+        return aligned_template, homography
+    else:
+
+        LOGGER.debug("Homography could not be computed. Returning original template.")
+        return template, None
+
+
+def detect_templates(
+    image_gray,
+    templates,
+    label,
+    threshold=0.6,
+    show_plots=False,
+    method=cv2.TM_CCOEFF_NORMED,
+    allow_resize=False,
+    align=True,
+):
     """
     Detects templates in the image and returns the highest match value.
     """
-    max_match_value = 0
+    max_match_value = None
     best_template = None
     best_location = None
     best_size = None
-    for template in templates:
-        tmpl = cv2.imread(template, 0)
+
+    for template_path in templates:
+        tmpl = cv2.imread(template_path, 0)
         if tmpl is None:
-            raise ValueError(f"Template image not found: {template}")
+            raise ValueError(f"Template image not found: {template_path}")
 
-        # Resize template if it's larger than the image
-        img_height, img_width = image_gray.shape
-        tmpl_height, tmpl_width = tmpl.shape
-        if tmpl_height > img_height or tmpl_width > img_width:
-            scale_factor = min(img_height / tmpl_height, img_width / tmpl_width, 1.0)
-            new_width = int(tmpl_width * scale_factor)
-            new_height = int(tmpl_height * scale_factor)
-            tmpl = cv2.resize(tmpl, (new_width, new_height), interpolation=cv2.INTER_AREA)
+        # Skip resizing in this approach
 
-            LOGGER.debug(f"Resized template '{template}' to ({new_width}, {new_height})")
+        LOGGER.debug("Skipping resizing of templates.")
 
-        match_value, location, size = template_match(image_gray, tmpl)
+        # Perform template matching with cropping and alignment
+        match_value, location, size = template_match(
+            image_gray, tmpl, method=method, align=align, show_plots=show_plots
+        )
 
-        LOGGER.debug(f"Template '{template}' match value: {match_value}")
-        if match_value > max_match_value:
+        LOGGER.debug(f"Template '{template_path}' match value: {match_value}")
+
+        # Update best match
+        if max_match_value is None or match_value > max_match_value:
             max_match_value = match_value
-            best_template = template
+            best_template = template_path
             best_location = location
             best_size = size
 
-    confidence = compute_confidence_from_match(max_match_value)
+    # Compute confidence
+    confidence = max_match_value * 100  # Since match_value is between -1 and 1 for TM_CCOEFF_NORMED
+
     detected = confidence >= threshold * 100
 
-    if show_plots and best_template is not None and best_location is not None:
-        top_left = best_location
-        w, h = best_size
-        bottom_right = (top_left[0] + w, top_left[1] + h)
-        result_image = image_gray.copy()
-        cv2.rectangle(result_image, top_left, bottom_right, 255, 2)
-        plt.imshow(result_image, cmap="gray")
+    # Visualization code (if applicable)
+    if show_plots and best_template is not None:
+        # Since we have cropped and aligned images, we can display them directly
+        plt.figure()
+        plt.imshow(image_gray, cmap="gray")
         plt.title(f"Best match for {label}")
         plt.axis("off")
         plt.show()
@@ -290,6 +423,7 @@ def process_image(image_path, threshold=60, show_plots=False):
         "template_no_4.PNG",
         "template_no_5.PNG",
     ]
+    LOGGER.debug("comparing against templates of not circled yes/no")
     detected_not_circled, confidence_not_circled = detect_templates(
         gray,
         templates_not_circled,
@@ -315,6 +449,7 @@ def process_image(image_path, threshold=60, show_plots=False):
         "template_no_check_hand.PNG",
         "template_no_check_hand_2.PNG",
     ]
+    LOGGER.debug("comparing against templates of ticked yes/no")
     detected_checked, confidence_checked = detect_templates(
         gray,
         templates_checked,
@@ -342,6 +477,7 @@ def process_image(image_path, threshold=60, show_plots=False):
         "template_no_uncheck_5.PNG",
         "template_no_uncheck_6.PNG",
     ]
+    LOGGER.debug("comparing against templates of not ticked yes/no")
     detected_unchecked, confidence_unchecked = detect_templates(
         gray,
         templates_unchecked,
@@ -414,24 +550,67 @@ def process_image(image_path, threshold=60, show_plots=False):
         ("tick_marks", confidence_tick_marks),
     ]
 
-    # Find the highest confidence value
-    highest_confidence_test, highest_confidence = max(confidences, key=lambda x: x[1])
-
-    # Determine the final result based on the threshold
-    if highest_confidence >= threshold:
-        final_result = True
-    else:
-        final_result = False
+    # Use the new function to determine the final result
+    final_result, test_performed, confidence = determine_final_result(confidences, threshold)
 
     # Prepare the return payload
     payload = {
-        "confidence": highest_confidence,
+        "confidence": confidence,
         "final_result": final_result,
-        "test_performed": highest_confidence_test,
+        "test_performed": test_performed,
         "all_attempts": results,
     }
 
     return payload
+
+
+def determine_final_result(confidences, threshold):
+    """
+    Determines the final result based on the confidences of different tests.
+
+    Parameters:
+        confidences (list of tuples): List of (test_name, confidence_value)
+        threshold (float): Threshold value for detection (0-100)
+
+    Returns:
+        final_result (bool): True if positive detection, False otherwise
+        test_performed (str): The test that determined the final result
+        confidence (float): The confidence of the test performed
+    """
+    # Define positive and negative tests
+    positive_tests = ["tick_marks", "circled", "checkbox_checked"]
+    negative_tests = ["not_circled", "checkbox_unchecked"]
+
+    # Separate the confidences into positive and negative detections
+    positive_detections = [(test, conf) for test, conf in confidences if test in positive_tests and conf >= threshold]
+    negative_detections = [(test, conf) for test, conf in confidences if test in negative_tests and conf >= threshold]
+
+    if positive_detections and negative_detections:
+        # Conflict detected; compare confidences
+        highest_positive = max(positive_detections, key=lambda x: x[1])
+        highest_negative = max(negative_detections, key=lambda x: x[1])
+
+        if highest_positive[1] >= highest_negative[1]:
+            final_result = True
+            test_performed, confidence = highest_positive
+        else:
+            final_result = False
+            test_performed, confidence = highest_negative
+    elif positive_detections:
+        # Positive detection
+        test_performed, confidence = max(positive_detections, key=lambda x: x[1])
+        final_result = True
+    elif negative_detections:
+        # Negative detection
+        test_performed, confidence = max(negative_detections, key=lambda x: x[1])
+        final_result = False
+    else:
+        # No detections meet the threshold
+        # Optionally, select the test with the highest confidence
+        test_performed, confidence = max(confidences, key=lambda x: x[1])
+        final_result = False  # Default to False when uncertain
+
+    return final_result, test_performed, confidence
 
 
 def annotate_image(image, result_payload, output_path, file_name_prefix="result"):
