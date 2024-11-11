@@ -212,15 +212,13 @@ def detect_templates(
             image_gray, tmpl, method=method, align=align, show_plots=show_plots
         )
 
-        LOGGER.debug(f"Template '{template_path}' match value: {match_value}")
-
         # Update best match
         if max_match_value is None or match_value > max_match_value:
             max_match_value = match_value
             best_template = template_path
             best_location = location
             best_size = size
-
+    LOGGER.debug(f"Template '{best_template}' has best match with value: {max_match_value}")
     # Compute confidence
     confidence = max_match_value * 100  # Since match_value is between -1 and 1 for TM_CCOEFF_NORMED
 
