@@ -6,6 +6,10 @@ import os
 import logging
 import glob
 
+from tensorflow.keras.models import load_model
+from io import BytesIO
+
+
 # Set up logger
 LOGGER = logging.getLogger(__name__)
 logging.basicConfig(level=logging.DEBUG, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
@@ -794,7 +798,7 @@ def process_image(image_path, threshold=60, show_plots=False):
     return payload
 
 
-def annotate_image(image, result_payload, output_path, file_name_prefix="result"):
+def annotate_image_openCV(image, result_payload, output_path, file_name_prefix="result"):
     """
     Adds an annotation to the image based on the overall detection result and saves it.
     Reduces the font size to fit the text within the image width without scaling the image.
@@ -891,35 +895,255 @@ def annotate_image(image, result_payload, output_path, file_name_prefix="result"
     return output_file_path
 
 
-# Example usage of the corrected code
-if __name__ == "__main__":
-    # Example variables (replace these with your actual paths and filenames)
-    full_file_path = "path_to_your_image.PNG"  # Replace with your actual image path
-    filename = "your_image.PNG"  # Replace with your actual filename
-    threshold = 60  # Confidence threshold (0-100)
+##### KERAS model
 
+
+def get_consent_model(document_id):
+    input_paths = [
+        "no1.PNG",
+        "no2.PNG",
+        "yes1.PNG",
+        "yes2.PNG",
+    ]
+
+    output_paths = [
+        "no1_result.PNG",
+        "no2_result.PNG",
+        "yes1_result.PNG",
+        "yes2_result.PNG",
+    ]
+
+    LOGGER.info(f"Analysing {document_id}")
+    os.environ["S3_BUCKET"] = "hto-consent-audit-bucket-prod"
+
+    folder = f"{document_id}-analysis/"
+    consent = {}
+
+    # Process each image using the model
+    for input_path, output_path in zip(input_paths, output_paths):
+        LOGGER.info("\n\n")
+        LOGGER.debug(f"Reading image {input_path}")
+        try:
+            # Read the image bytes
+            with open(folder + input_path, "rb") as f:
+                input_bytesio = BytesIO(f.read())
+
+            # Process the image with the model
+            predicted_label, is_ticked, confidence = process_image_with_model(input_bytesio)
+
+            # Generate key names (e.g., "no1", "confidence_no1")
+            image_name = input_path.split(".")[0]  # Strip file extension
+            consent[image_name] = is_ticked
+            consent[f"confidence_{image_name}"] = (
+                confidence["ticked_confidence"] * 100 if is_ticked else confidence["unticked_confidence"] * 100
+            )
+
+        except Exception as e:
+            LOGGER.error(f"Error processing image {input_path}: {str(e)}")
+            consent[input_path] = {"error": str(e)}
+
+    return consent
+
+
+def process_image_with_model(input_bytesio: BytesIO, threshold: float, model) -> dict:
+    """
+    Processes an image and predicts its status as ticked/unticked and circled/not circled.
+
+    Args:
+        input_bytesio (BytesIO): The image file in BytesIO format.
+        threshold (float): The confidence threshold for including predictions.
+
+    Returns:
+        dict: A dictionary containing the prediction results and their confidence scores.
+    """
     try:
-        # Process the image
-        result_payload = process_image(full_file_path, threshold=threshold, show_plots=False)
-        LOGGER.info(f"Detection Payload: {result_payload}")
+        # Read image from BytesIO object
+        img_bytes = np.frombuffer(input_bytesio.getvalue(), np.uint8)
+        img = cv2.imdecode(img_bytes, cv2.IMREAD_GRAYSCALE)
 
-        # Save the resulting images with green or red text
-        output_directory = "results"
-        file_name_prefix = os.path.splitext(os.path.basename(filename))[0]  # Use the original file name as prefix
+        if img is None:
+            raise ValueError("Image decoding failed. Please check the input image format.")
 
-        # Load the original image in color for annotation
-        image_color = cv2.imread(full_file_path)
-        if image_color is None:
-            raise ValueError(f"Failed to load image in color at path: {full_file_path}")
+        # Preprocess image for the model
+        img_resized = cv2.resize(img, (80, 140))  # Resize to 80x140 (width x height)
+        img_reshaped = img_resized.reshape(-1, 140, 80, 1)  # Reshape to (batch_size, height, width, channels)
+        img_normalized = img_reshaped / 255.0  # Normalize pixel values
 
-        # Annotate and save the image
-        annotated_image_path = annotate_image(
-            image=image_color,
-            result_payload=result_payload,
-            output_path=output_directory,
-            file_name_prefix=file_name_prefix,
+        # Run the model to predict the status
+        predictions = model.predict(img_normalized)
+        LOGGER.info(
+            f"Raw predictions: ticked {predictions[0][0]} - unticked {predictions[0][1]} - circled_yes {predictions[0][2]} - circled_no {predictions[0][3]}"
         )
-        LOGGER.info(f"Annotated image saved at: {annotated_image_path}")
+
+        # Define label indices based on your model's output
+        # Assuming the model outputs [ticked, unticked, circled_yes, circled_no]
+        ticked_confidence = predictions[0][0]
+        unticked_confidence = predictions[0][1]
+        circled_yes_confidence = predictions[0][2]
+        circled_no_confidence = predictions[0][3]
+
+        response = {
+            "ticked": float(ticked_confidence),
+            "unticked": float(unticked_confidence),
+            "circled_yes": float(circled_yes_confidence),
+            "circled_no": float(circled_no_confidence),
+        }
+
+        LOGGER.info(f"Processed response: {response}")
+        return response
 
     except Exception as e:
-        LOGGER.error(f"An error occurred: {e}")
+        LOGGER.exception("An error occurred in process_image_with_model.")
+        return {"error": str(e)}
+
+
+def build_consent(response_payload: dict, threshold: float) -> dict:
+    """
+    Builds a consent dictionary from the response payload by selecting the label with the highest confidence.
+
+    Args:
+        response_payload (dict): The response payload from process_image_with_model.
+        threshold (float): The confidence threshold for determining certainty.
+
+    Returns:
+        dict: A dictionary with 'prediction' and 'confidence' keys.
+              If an error is present, it includes an 'error' key.
+    """
+    try:
+        if "error" in response_payload:
+            LOGGER.error(f"Error in response payload: {response_payload['error']}")
+            return {"prediction": "error", "confidence": 0.0}
+
+        # Define label to status mapping
+        label_mapping = {
+            "ticked": "ticked",
+            "unticked": "unticked",
+            "circled_yes": "circled",
+            "circled_no": "not circled",
+        }
+
+        # Find the label with the highest confidence
+        max_label, max_confidence = max(response_payload.items(), key=lambda item: item[1])
+        LOGGER.debug(f"Max label: {max_label} with confidence: {max_confidence}")
+
+        # Check if the highest confidence meets the threshold
+        if max_confidence >= threshold:
+            status = label_mapping.get(max_label, "unknown")
+            confidence_percentage = max_confidence * 100  # Convert to percentage
+        else:
+            status = "uncertain"
+            confidence_percentage = max_confidence * 100  # Still represent as percentage
+
+        consent = {"prediction": status, "confidence": round(confidence_percentage, 2)}  # Rounded to 2 decimal places
+
+        LOGGER.info(f"Consent built: {consent}")
+        return consent
+
+    except Exception as e:
+        LOGGER.exception("An exception occurred while building consent.")
+        return {"prediction": "error", "confidence": 0.0}
+
+
+def annotate_image(image, consent: dict, output_path: str, file_name_prefix: str = "result") -> str:
+    """
+    Adds an annotation to the image based on the consent dictionary and saves it.
+
+    Parameters:
+        image (numpy.ndarray): The original image.
+        consent (dict): The consent dictionary containing prediction and confidence.
+        output_path (str): Directory where the annotated image will be saved.
+        file_name_prefix (str): Prefix for the output file name.
+
+    Returns:
+        str: The path to the saved annotated image.
+    """
+    try:
+        # Extract information from consent
+        prediction = consent.get("prediction", "Unknown")
+        confidence = consent.get("confidence", 0.0)
+
+        # Determine annotation text and color based on prediction
+        if prediction == "error":
+            annotation_text = "Error in processing image."
+            color = (0, 0, 255)  # Red
+        elif prediction == "uncertain":
+            annotation_text = f"Uncertain ({confidence:.2f}%)"
+            color = (0, 255, 255)  # Yellow
+        elif prediction in ["ticked", "circled"]:
+            annotation_text = f"{prediction.capitalize()} ({confidence:.2f}%)"
+            color = (0, 0, 255)  # Red for positive detection
+        elif prediction in ["unticked", "not circled"]:
+            annotation_text = f"{prediction.replace('_', ' ').capitalize()} ({confidence:.2f}%)"
+            color = (0, 255, 0)  # Green for negative detection
+        else:
+            annotation_text = f"{prediction.capitalize()} ({confidence:.2f}%)"
+            color = (255, 255, 255)  # White for unknown
+
+        # Add the annotation to the image
+        annotated_image = image.copy()
+        img_height, img_width = annotated_image.shape[:2]
+
+        # Starting position for the text
+        x_start = 10
+        y_start = 30
+
+        # Initial font scale and thickness
+        font_scale = 1.0
+        thickness = 1
+        font = cv2.FONT_HERSHEY_SIMPLEX
+
+        # Get text size
+        text_size, _ = cv2.getTextSize(annotation_text, font, font_scale, thickness)
+        text_width = text_size[0]
+
+        # Minimum font scale to maintain readability
+        MIN_FONT_SCALE = 0.3
+
+        # Calculate the maximum allowed width for the text
+        max_text_width = img_width - 20  # Leave some margin
+
+        # Scale down font if text is wider than image
+        current_font_scale = font_scale
+        while text_width > max_text_width and current_font_scale > MIN_FONT_SCALE:
+            current_font_scale -= 0.1
+            text_size, _ = cv2.getTextSize(annotation_text, font, current_font_scale, thickness)
+            text_width = text_size[0]
+
+        # Check if font scale is above minimum threshold
+        if current_font_scale < MIN_FONT_SCALE:
+            current_font_scale = MIN_FONT_SCALE
+            text_size, _ = cv2.getTextSize(annotation_text, font, current_font_scale, thickness)
+            text_width = text_size[0]
+
+        # Adjust y position if text exceeds image height
+        if y_start + text_size[1] > img_height - 10:
+            LOGGER.warning("Annotation exceeds image height; cannot add annotation.")
+        else:
+            # Add text to the image
+            cv2.putText(
+                annotated_image,
+                annotation_text,
+                (x_start, y_start),
+                font,
+                current_font_scale,
+                color,
+                thickness,
+                cv2.LINE_AA,
+            )
+
+        # Ensure the output directory exists
+        os.makedirs(output_path, exist_ok=True)
+
+        # Prepare the output file path
+        output_file_name = f"{file_name_prefix}_annotated.png"
+        output_file_path = os.path.join(output_path, output_file_name)
+
+        # Save the annotated image
+        cv2.imwrite(output_file_path, annotated_image)
+
+        LOGGER.info(f"Annotated image saved to {output_file_path}")
+        return output_file_path
+
+    except Exception as e:
+        LOGGER.exception("An exception occurred while annotating the image.")
+        return ""
