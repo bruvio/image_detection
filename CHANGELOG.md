@@ -1,3 +1,10 @@
+## [2.1.3](https://github.com/bruvio/image_detection/compare/2.1.2...2.1.3) (2024-11-20)
+
+
+### Bug Fixes
+
+* further enhancement ([282eb61](https://github.com/bruvio/image_detection/commit/282eb619d17615064fb91a4fb4d1d0781a6357fd))
+
 ## [2.1.2](https://github.com/bruvio/image_detection/compare/2.1.1...2.1.2) (2024-11-20)
 
 
