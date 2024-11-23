@@ -8,7 +8,7 @@ import cv2
 import os
 from sklearn.model_selection import train_test_split
 from sklearn.utils import class_weight
-from sklearn.metrics import classification_report
+from sklearn.metrics import classification_report, confusion_matrix
 import logging
 import random
 
