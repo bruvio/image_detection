@@ -70,7 +70,7 @@ widths = []
 heights = []
 aspect_ratios = []
 
-model.load('image_model.keras')
+model.load('image_classifier.keras')
 
 threshold = 0.8
 for folder in folder_list:
