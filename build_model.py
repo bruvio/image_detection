@@ -163,3 +163,5 @@ LOGGER.info("Classification Report")
 y_pred_probs = model.predict(X_test)
 y_pred = np.argmax(y_pred_probs, axis=1)
 print(classification_report(y_test, y_pred, target_names=label_mapping.keys()))
+
+model.save('image_classifier.keras')
