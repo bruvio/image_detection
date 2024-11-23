@@ -47,7 +47,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: image_model
-          path: image_model.keras
+          path: image_classifier.keras
 
       # Run predictions
       - name: Download Model Artifact
