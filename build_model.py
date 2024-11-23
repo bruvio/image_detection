@@ -105,49 +105,47 @@ count_labels(y_test, "testing")
 class_weights_array = class_weight.compute_class_weight(class_weight="balanced", classes=np.unique(y_train), y=y_train)
 class_weights = dict(enumerate(class_weights_array))
 
+
 # Create the CNN model
-LOGGER.info("Creating CNN model with dropout")
+LOGGER.info("Creating CNN model based on the original architecture")
 model = models.Sequential()
 
 # First convolutional block
 model.add(layers.Conv2D(32, (3, 3), activation="relu", input_shape=(140, 80, 1)))
 model.add(layers.MaxPooling2D((2, 2)))
-model.add(layers.Dropout(0.25))  # Dropout layer added
+model.add(layers.Dropout(0.25))
 
 # Second convolutional block
 model.add(layers.Conv2D(64, (3, 3), activation="relu"))
 model.add(layers.MaxPooling2D((2, 2)))
-model.add(layers.Dropout(0.25))  # Dropout layer added
+model.add(layers.Dropout(0.25))
 
 # Third convolutional block
 model.add(layers.Conv2D(64, (3, 3), activation="relu"))
-# Optional pooling layer if needed
-# model.add(layers.MaxPooling2D((2, 2)))
-model.add(layers.Dropout(0.25))  # Dropout layer added
+model.add(layers.MaxPooling2D((2, 2)))  # Added pooling layer
+model.add(layers.Dropout(0.25))
 
 # Flatten and dense layers
 model.add(layers.Flatten())
-model.add(layers.Dense(64, activation="relu"))
-model.add(layers.Dropout(0.5))  # Dropout layer added
+model.add(layers.Dense(128, activation="relu"))  # Increased neurons
+model.add(layers.Dropout(0.5))
 model.add(layers.Dense(4, activation="softmax"))
 
-optimizer = Adam(learning_rate=0.001)
-
-lr_scheduler = ReduceLROnPlateau(monitor="val_loss", factor=0.1, patience=3)
-
 # Compile the model
-LOGGER.info("Compiling the model")
+optimizer = Adam(learning_rate=0.0001)
 model.compile(optimizer=optimizer, loss="sparse_categorical_crossentropy", metrics=["accuracy"])
 model.summary()
-# Train the model
-LOGGER.info("Training the model")
-early_stopping = EarlyStopping(monitor="val_loss", patience=5, restore_best_weights=True)
+
+# Early stopping callback
+early_stopping = EarlyStopping(monitor='val_loss', patience=10, restore_best_weights=True)
+
+# Train the model without data augmentation
 history = model.fit(
     X_train,
     y_train,
     epochs=100,
     validation_data=(X_val, y_val),
-    callbacks=[early_stopping, lr_scheduler],
+    callbacks=[early_stopping],
     class_weight=class_weights,
 )
 
@@ -163,5 +161,12 @@ LOGGER.info("Classification Report")
 y_pred_probs = model.predict(X_test)
 y_pred = np.argmax(y_pred_probs, axis=1)
 print(classification_report(y_test, y_pred, target_names=label_mapping.keys()))
+
+
+Confusion Matrix
+conf_mat = confusion_matrix(y_test, y_pred)
+print("Confusion Matrix:")
+print(conf_mat)
+
 
 model.save('image_classifier.keras')
