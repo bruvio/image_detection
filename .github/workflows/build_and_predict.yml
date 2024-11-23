@@ -40,7 +40,19 @@ jobs:
       - name: Build TensorFlow Model
         run: |
           python build_model.py
+ 
+      - name: Save Model Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: tensorflow-model
+          path: /
 
+      # Run predictions
+      - name: Download Model Artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: tensorflow-model
+          path: /
       # Run predictions
       - name: Run Predictions
         run: |
