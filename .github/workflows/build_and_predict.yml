@@ -40,19 +40,21 @@ jobs:
       - name: Build TensorFlow Model
         run: |
           python build_model.py
+        env:
+          CUDA_VISIBLE_DEVICES: "-1"
  
       - name: Save Model Artifact
         uses: actions/upload-artifact@v3
         with:
-          name: image_model.keras
-          path: /
+          name: image_model
+          path: image_model.keras
 
       # Run predictions
       - name: Download Model Artifact
         uses: actions/download-artifact@v3
         with:
-          name: image_model.keras
-          path: /
+          name: image_model
+          path: .
       # Run predictions
       - name: Run Predictions
         run: |
