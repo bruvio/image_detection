@@ -898,51 +898,6 @@ def annotate_image_openCV(image, result_payload, output_path, file_name_prefix="
 ##### KERAS model
 
 
-def get_consent_model(document_id):
-    input_paths = [
-        "no1.PNG",
-        "no2.PNG",
-        "yes1.PNG",
-        "yes2.PNG",
-    ]
-
-    output_paths = [
-        "no1_result.PNG",
-        "no2_result.PNG",
-        "yes1_result.PNG",
-        "yes2_result.PNG",
-    ]
-
-    LOGGER.info(f"Analysing {document_id}")
-    os.environ["S3_BUCKET"] = "hto-consent-audit-bucket-prod"
-
-    folder = f"{document_id}-analysis/"
-    consent = {}
-
-    # Process each image using the model
-    for input_path, output_path in zip(input_paths, output_paths):
-        LOGGER.info("\n\n")
-        LOGGER.debug(f"Reading image {input_path}")
-        try:
-            # Read the image bytes
-            with open(folder + input_path, "rb") as f:
-                input_bytesio = BytesIO(f.read())
-
-            # Process the image with the model
-            predicted_label, is_ticked, confidence = process_image_with_model(input_bytesio)
-
-            # Generate key names (e.g., "no1", "confidence_no1")
-            image_name = input_path.split(".")[0]  # Strip file extension
-            consent[image_name] = is_ticked
-            consent[f"confidence_{image_name}"] = (
-                confidence["ticked_confidence"] * 100 if is_ticked else confidence["unticked_confidence"] * 100
-            )
-
-        except Exception as e:
-            LOGGER.error(f"Error processing image {input_path}: {str(e)}")
-            consent[input_path] = {"error": str(e)}
-
-    return consent
 
 
 def process_image_with_model(input_bytesio: BytesIO, threshold: float, model) -> dict:
