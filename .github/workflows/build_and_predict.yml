@@ -1,10 +1,12 @@
 name: Build and Predict TensorFlow Model
 
 on:
-  push:
-    branches:
-      - main
   workflow_dispatch: # Allows manual triggering of the workflow
+    inputs:
+      branch:
+        description: 'The branch to run the workflow on'
+        required: false
+        default: 'main'
 
 jobs:
   build-and-predict:
