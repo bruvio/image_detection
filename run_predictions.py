@@ -12,6 +12,9 @@ from sklearn.utils import class_weight
 from sklearn.metrics import classification_report
 import logging
 import random
+from tensorflow.keras.models import load_model
+
+
 
 # Set the random seeds for reproducibility
 os.environ["PYTHONHASHSEED"] = "0"
@@ -70,7 +73,7 @@ widths = []
 heights = []
 aspect_ratios = []
 
-model.load('image_classifier.keras')
+model= load_model('image_classifier.keras')
 
 threshold = 0.8
 for folder in folder_list:
