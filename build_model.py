@@ -127,8 +127,8 @@ model.add(layers.Dropout(0.25))
 
 # Flatten and dense layers
 model.add(layers.Flatten())
-model.add(layers.Dense(128, activation="relu"))  # Increased neurons
-model.add(layers.Dropout(0.5))
+model.add(layers.Dense(148, activation="relu"))  # Increased neurons
+model.add(layers.Dropout(0.6))
 model.add(layers.Dense(4, activation="softmax"))
 
 # Compile the model
