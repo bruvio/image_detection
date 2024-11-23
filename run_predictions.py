@@ -70,7 +70,9 @@ widths = []
 heights = []
 aspect_ratios = []
 
-threshold = 0.6
+model.load('image_model.keras')
+
+threshold = 0.8
 for folder in folder_list:
     image_paths = list_files_in_folder(folder, ext="PNG")
 
