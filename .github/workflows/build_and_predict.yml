@@ -44,14 +44,14 @@ jobs:
       - name: Save Model Artifact
         uses: actions/upload-artifact@v3
         with:
-          name: tensorflow-model
+          name: image_model.keras
           path: /
 
       # Run predictions
       - name: Download Model Artifact
         uses: actions/download-artifact@v3
         with:
-          name: tensorflow-model
+          name: image_model.keras
           path: /
       # Run predictions
       - name: Run Predictions
