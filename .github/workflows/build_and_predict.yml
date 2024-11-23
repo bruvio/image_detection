@@ -1,0 +1,47 @@
+name: Build and Predict TensorFlow Model
+
+on:
+  workflow_dispatch: # Allows manual triggering of the workflow
+    inputs:
+      branch:
+        description: 'The branch to run the workflow on'
+        required: false
+        default: 'main'
+
+jobs:
+  build-and-predict:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout the repository
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Set up Python environment
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11' 
+
+      # Install dependencies
+      - name: Cache pip dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      # Build TensorFlow model
+      - name: Build TensorFlow Model
+        run: |
+          python build_model.py
+
+      # Run predictions
+      - name: Run Predictions
+        run: |
+          python run_predictions.py 
