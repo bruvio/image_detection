@@ -43,6 +43,12 @@ jobs:
         env:
           CUDA_VISIBLE_DEVICES: "-1"
  
+
+      # Verify model exists
+      - name: Verify model exists
+        run: ls -l image_classifier.keras
+
+      # Save Model Artifact
       - name: Save Model Artifact
         uses: actions/upload-artifact@v3
         with:
