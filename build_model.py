@@ -132,7 +132,7 @@ model.add(layers.Dropout(0.5))
 model.add(layers.Dense(4, activation="softmax"))
 
 # Compile the model
-optimizer = Adam(learning_rate=0.00005)
+optimizer = Adam(learning_rate=0.0005)
 model.compile(optimizer=optimizer, loss="sparse_categorical_crossentropy", metrics=["accuracy"])
 model.summary()
 
