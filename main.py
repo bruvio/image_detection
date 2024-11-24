@@ -926,7 +926,7 @@ def process_image_with_model(input_bytesio: BytesIO, threshold: float, model) ->
 
         # Run the model to predict the status
         predictions = model.predict(img_normalized)
-        LOGGER.info(
+        LOGGER.debug(
             f"Raw predictions: ticked {predictions[0][0]} - unticked {predictions[0][1]} - circled_yes {predictions[0][2]} - circled_no {predictions[0][3]}"
         )
 
@@ -944,7 +944,7 @@ def process_image_with_model(input_bytesio: BytesIO, threshold: float, model) ->
             "circled_no": float(circled_no_confidence),
         }
 
-        LOGGER.info(f"Processed response: {response}")
+        LOGGER.debug(f"Processed response: {response}")
         return response
 
     except Exception as e:
@@ -991,7 +991,7 @@ def build_consent(response_payload: dict, threshold: float) -> dict:
 
         consent = {"prediction": status, "confidence": round(confidence_percentage, 2)}  # Rounded to 2 decimal places
 
-        LOGGER.info(f"Consent built: {consent}")
+        LOGGER.debug(f"Consent built: {consent}")
         return consent
 
     except Exception as e:
@@ -1096,7 +1096,7 @@ def annotate_image(image, consent: dict, output_path: str, file_name_prefix: str
         # Save the annotated image
         cv2.imwrite(output_file_path, annotated_image)
 
-        LOGGER.info(f"Annotated image saved to {output_file_path}")
+        LOGGER.debug(f"Annotated image saved to {output_file_path}")
         return output_file_path
 
     except Exception as e:
