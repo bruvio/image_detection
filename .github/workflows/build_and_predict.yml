@@ -7,10 +7,23 @@ on:
         description: 'The branch to run the workflow on'
         required: false
         default: 'master'
+      epochs:
+        description: 'Number of training epochs'
+        required: false
+        default: '200'
+      learning_rate:
+        description: 'Learning rate for the optimizer'
+        required: false
+        default: '0.0005'
 
 jobs:
   build-and-predict:
     runs-on: ubuntu-latest
+
+    # Set Environment Variables from Inputs
+    env:
+      EPOCHS: ${{ github.event.inputs.epochs }}
+      LEARNING_RATE: ${{ github.event.inputs.learning_rate }}
 
     steps:
       # Checkout the repository
@@ -41,8 +54,7 @@ jobs:
         run: |
           python build_model.py
         env:
-          CUDA_VISIBLE_DEVICES: "-1"
- 
+          CUDA_VISIBLE_DEVICES: "-1" # Ensures TensorFlow runs on CPU
 
       # Verify model exists
       - name: Verify model exists
@@ -55,13 +67,14 @@ jobs:
           name: image_model
           path: image_classifier.keras
 
-      # Run predictions
+      # Download Model Artifact
       - name: Download Model Artifact
         uses: actions/download-artifact@v3
         with:
           name: image_model
           path: .
+
       # Run predictions
       - name: Run Predictions
         run: |
-          python run_predictions.py 
+          python run_predictions.py
