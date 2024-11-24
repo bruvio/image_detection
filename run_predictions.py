@@ -31,6 +31,8 @@ def list_files_in_folder(folder, ext="PNG"):
 results = defaultdict(lambda: {"true_positive": 0, "false_positive": 0, "true_negative": 0, "false_negative": 0})
 all_predictions = []
 all_true_labels = []
+false_positives = []
+false_negatives = []
 
 # Process each folder
 for root_folder in folder_list:
@@ -87,9 +89,21 @@ for root_folder in folder_list:
                             results[label]["true_positive"] += 1
                         else:
                             results[label]["false_negative"] += 1
+                            false_negatives.append({
+                                "file": file_path,
+                                "predicted_label": predicted_label,
+                                "confidence": confidence,
+                                "real_label": real_label,
+                            })
                     else:
                         if label == predicted_label:
                             results[label]["false_positive"] += 1
+                            false_positives.append({
+                                "file": file_path,
+                                "predicted_label": predicted_label,
+                                "confidence": confidence,
+                                "real_label": real_label,
+                            })
                         else:
                             results[label]["true_negative"] += 1
                 
@@ -116,10 +130,7 @@ for root_folder in folder_list:
 # Generate report after all predictions
 LOGGER.info("\n=== Classification Report ===\n%s", classification_report(all_true_labels, all_predictions, target_names=list(results.keys())))
 
-
-
 LOGGER.info("\n=== Confusion Matrix ===\n%s", confusion_matrix(all_true_labels, all_predictions, labels=list(results.keys())))
-
 
 # Output detailed metrics for each label
 LOGGER.info("\n=== Detailed Metrics ===")
@@ -130,4 +141,12 @@ for label, metrics in results.items():
     LOGGER.info(f"  True Negatives: {metrics['true_negative']}")
     LOGGER.info(f"  False Negatives: {metrics['false_negative']}")
 
+# Log false positives
+LOGGER.info("\n=== False Positives ===")
+for fp in false_positives:
+    LOGGER.info(f"File: {fp['file']} - Predicted: {fp['predicted_label']} (Confidence: {fp['confidence']:.2f}), Real: {fp['real_label']}")
 
+# Log false negatives
+LOGGER.info("\n=== False Negatives ===")
+for fn in false_negatives:
+    LOGGER.info(f"File: {fn['file']} - Predicted: {fn['predicted_label']} (Confidence: {fn['confidence']:.2f}), Real: {fn['real_label']}")
