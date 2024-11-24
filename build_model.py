@@ -74,10 +74,10 @@ labels = np.array([label_mapping[label] for label in labels])
 # Count the number of images per label
 unique_labels, counts = np.unique(labels, return_counts=True)
 label_names = {v: k for k, v in label_mapping.items()}  # Reverse mapping
-print("\nNumber of images per label in the entire dataset:")
+LOGGER.info("\nNumber of images per label in the entire dataset:")
 for label_int, count in zip(unique_labels, counts):
     label_name = label_names[label_int]
-    print(f"{label_name} ({label_int}): {count} images")
+    LOGGER.info(f"{label_name} ({label_int}): {count} images")
 
 # Split data into training, validation, and testing
 LOGGER.info("Splitting data into training, validation, and testing")
@@ -90,10 +90,10 @@ X_train, X_val, y_train, y_val = train_test_split(
 # Function to count labels
 def count_labels(y, dataset_name):
     unique_labels, counts = np.unique(y, return_counts=True)
-    print(f"\nNumber of images per label in the {dataset_name} set:")
+    LOGGER.info(f"\nNumber of images per label in the {dataset_name} set:")
     for label_int, count in zip(unique_labels, counts):
         label_name = label_names[label_int]
-        print(f"{label_name} ({label_int}): {count} images")
+        LOGGER.info(f"{label_name} ({label_int}): {count} images")
 
 
 # Count labels in each dataset
@@ -132,7 +132,7 @@ model.add(layers.Dropout(0.5))
 model.add(layers.Dense(4, activation="softmax"))
 
 # Compile the model
-optimizer = Adam(learning_rate=0.0001)
+optimizer = Adam(learning_rate=0.00005)
 model.compile(optimizer=optimizer, loss="sparse_categorical_crossentropy", metrics=["accuracy"])
 model.summary()
 
@@ -143,7 +143,7 @@ early_stopping = EarlyStopping(monitor='val_loss', patience=10, restore_best_wei
 history = model.fit(
     X_train,
     y_train,
-    epochs=100,
+    epochs=200,
     validation_data=(X_val, y_val),
     callbacks=[early_stopping],
     class_weight=class_weights,
@@ -152,21 +152,22 @@ history = model.fit(
 
 # Evaluate the model on test data
 test_loss, test_acc = model.evaluate(X_test, y_test, verbose=2)
-LOGGER.info(f"Test accuracy: {test_acc}")
+LOGGER.info(f"\nTest accuracy\n: {test_acc}")
 
 
 # Evaluate the model
 LOGGER.info("\nEvaluating the model")
-LOGGER.info("Classification Report")
+
 y_pred_probs = model.predict(X_test)
 y_pred = np.argmax(y_pred_probs, axis=1)
-print(classification_report(y_test, y_pred, target_names=label_mapping.keys()))
+LOGGER.info(f"\nClassification Report\n {classification_report(y_test, y_pred, target_names=label_mapping.keys())}")
+
 
 
 # Confusion Matrix
 conf_mat = confusion_matrix(y_test, y_pred)
-print("Confusion Matrix:")
-print(conf_mat)
+LOGGER.info(f"Confusion Matrix:\n {conf_mat}")
+
 
 
 model.save('image_classifier.keras')

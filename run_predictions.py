@@ -1,141 +1,133 @@
-from main import *
-import tensorflow as tf
-from tensorflow.keras import layers, models
-from tensorflow.keras.callbacks import EarlyStopping, ReduceLROnPlateau
-from tensorflow.keras.optimizers import Adam
-import numpy as np
-import matplotlib.pyplot as plt
-import cv2
 import os
-from sklearn.model_selection import train_test_split
-from sklearn.utils import class_weight
-from sklearn.metrics import classification_report
+import cv2
 import logging
-import random
-from tensorflow.keras.models import load_model
-
-
-
-# Set the random seeds for reproducibility
-os.environ["PYTHONHASHSEED"] = "0"
-random.seed(42)
-np.random.seed(42)
-tf.random.set_seed(42)
-os.environ["TF_DETERMINISTIC_OPS"] = "1"
-
-# Initialize logger
-logging.basicConfig(level=logging.INFO)
-LOGGER = logging.getLogger(__name__)
-
-
-
-def list_files_in_folder(folder_path, ext=None):
-    """
-    Returns a list of file names in the given folder, optionally filtering by extension.
-
-    Parameters:
-        folder_path (str): The path to the folder.
-        ext (str, optional): The file extension to filter by (e.g., 'png'). Defaults to None.
-
-    Returns:
-        list: A list of file names matching the extension.
-    """
-    try:
-        # List all files in the directory
-        files = [f for f in os.listdir(folder_path) if os.path.isfile(os.path.join(folder_path, f))]
-
-        if ext is not None:
-            # Normalize the extension to lowercase
-            ext = ext.lower()
-            # Filter files by extension (case-insensitive)
-            files = [f for f in files if os.path.splitext(f)[1].lower() == f".{ext}"]
-
-        return files
-
-    except FileNotFoundError:
-        print(f"The folder '{folder_path}' does not exist.")
-        return []
-    except PermissionError:
-        print(f"Permission denied to access '{folder_path}'.")
-        return []
-
-
 from io import BytesIO
+from collections import defaultdict
+from tensorflow.keras.models import load_model
+from sklearn.metrics import classification_report, confusion_matrix
+from main import *
 
-folder_list = [
-    "dataset/images_test",
-    # "dataset/circled_no",
-    # "dataset/circled_yes",
-    # "dataset/unticked",
-    # "dataset/ticked",
-]
+# Initialize logging
+LOGGER = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO)
+
+# Define paths and settings
+folder_list = ["dataset/images_test"]
 widths = []
 heights = []
 aspect_ratios = []
 
-model= load_model('image_classifier.keras')
-
+model = load_model("image_classifier.keras")
 threshold = 0.8
-for folder in folder_list:
-    image_paths = list_files_in_folder(folder, ext="PNG")
 
-    LOGGER.info(folder)
-    for file_name in image_paths:
-        LOGGER.info("\n\n")
-        full_file_path = os.path.join(folder, file_name)
-        LOGGER.info(f"processing image {full_file_path}")
-        filename = full_file_path.split("/")[-1]
-        image_name = filename.split(".")[0]
-        unique_strings = [
-            "no1_93",
-            "no1_86",
-            "yes1_2",
-            "no1_96",
-            "no1_97",
-            "yes1_79",
-            "no1_27",
-            "no1_2",
-            "no4",
-            "no1_71",
-            "yes1_60",
-            "no1_22",
-        ]
+# Function to list files in a folder
+def list_files_in_folder(folder, ext="PNG"):
+    return [
+        file for file in os.listdir(folder)
+        if file.endswith(ext) and os.path.isfile(os.path.join(folder, file))
+    ]
 
-        image = cv2.imread(full_file_path)
-        h, w = image.shape[:2]
-        widths.append(w)
-        heights.append(h)
-        aspect_ratios.append(w / h)
+# Initialize metrics storage
+results = defaultdict(lambda: {"true_positive": 0, "false_positive": 0, "true_negative": 0, "false_negative": 0})
+all_predictions = []
+all_true_labels = []
 
-        if file_name in unique_strings or 1:
-
-            # if name  in unique_strings or 1:
-            # break
+# Process each folder
+for root_folder in folder_list:
+    for label_folder in os.listdir(root_folder):
+        label_path = os.path.join(root_folder, label_folder)
+        if not os.path.isdir(label_path):
+            continue
+        
+        # Real label is the folder name
+        real_label = label_folder
+        
+        LOGGER.info(f"Processing folder: {label_path} with label: {real_label}")
+        image_paths = list_files_in_folder(label_path, ext="PNG")
+        
+        for file_name in image_paths:
+            file_path = os.path.join(label_path, file_name)
+            LOGGER.info("\n\n")
+            LOGGER.info(f"Processing image: {file_path}")
+            
             try:
-                with open(full_file_path, "rb") as image_file:
+                # Load and process the image
+                image = cv2.imread(file_path)
+                if image is None:
+                    LOGGER.error(f"Failed to read image: {file_path}")
+                    continue
+                
+                h, w = image.shape[:2]
+                widths.append(w)
+                heights.append(h)
+                aspect_ratios.append(w / h)
+                
+                # Convert image to bytes
+                with open(file_path, "rb") as image_file:
                     image_bytes = BytesIO(image_file.read())
-
+                
+                # Predict using the model
                 result_payload = process_image_with_model(image_bytes, threshold, model)
+                LOGGER.info(f"Raw predictions: {result_payload}")
+
+                # Determine the label with the highest confidence
+                predicted_label = max(result_payload, key=result_payload.get)
+                confidence = result_payload[predicted_label]
+
+                LOGGER.info(f"Processed response: {result_payload}")
+                
+                # Store predictions and labels for the report
+                all_predictions.append(predicted_label)
+                all_true_labels.append(real_label)
+                
+                # Calculate metrics
+                for label in result_payload.keys():
+                    if label == real_label:
+                        if label == predicted_label:
+                            results[label]["true_positive"] += 1
+                        else:
+                            results[label]["false_negative"] += 1
+                    else:
+                        if label == predicted_label:
+                            results[label]["false_positive"] += 1
+                        else:
+                            results[label]["true_negative"] += 1
+                
+                # Log the prediction result
+                if predicted_label == real_label:
+                    LOGGER.info(f"Correct Prediction: {predicted_label} (Confidence: {confidence:.2f})")
+                else:
+                    LOGGER.warning(f"Incorrect Prediction: {predicted_label} (Confidence: {confidence:.2f}), Real Label: {real_label}")
+                
                 # Build consent dictionary
                 consent = build_consent(result_payload, threshold)
-
-                # Read the image using OpenCV for annotation
-                image = cv2.imread(full_file_path)
-
-                if image is None:
-                    LOGGER.error("Failed to read the image for annotation.")
-
-                # Prepare annotation parameters
-                output_directory = "results_model"
-                file_name_prefix = os.path.splitext(os.path.basename(full_file_path))[
-                    0
-                ]  # Use the original file name as prefix
-
+                
                 # Annotate the image
+                output_directory = "results_model"
+                file_name_prefix = os.path.splitext(os.path.basename(file_path))[0]
                 annotated_image_path = annotate_image(
                     image=image, consent=consent, output_path=output_directory, file_name_prefix=file_name_prefix
                 )
-
+                LOGGER.info(f"Annotated image saved at: {annotated_image_path}")
+            
             except Exception as e:
-                LOGGER.exception("An unexpected error occurred in the main workflow.")
+                LOGGER.exception(f"An unexpected error occurred while processing image {file_path}: {e}")
+
+# Generate report after all predictions
+LOGGER.info("\n=== Classification Report ===\n%s", classification_report(all_true_labels, all_predictions, target_names=list(results.keys())))
+
+
+
+LOGGER.info("\n=== Confusion Matrix ===\n%s", confusion_matrix(all_true_labels, all_predictions, labels=list(results.keys())))
+
+
+# Output detailed metrics for each label
+LOGGER.info("\n=== Detailed Metrics ===")
+for label, metrics in results.items():
+    LOGGER.info(f"Label: {label}")
+    LOGGER.info(f"  True Positives: {metrics['true_positive']}")
+    LOGGER.info(f"  False Positives: {metrics['false_positive']}")
+    LOGGER.info(f"  True Negatives: {metrics['true_negative']}")
+    LOGGER.info(f"  False Negatives: {metrics['false_negative']}")
+
 
