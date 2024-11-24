@@ -106,6 +106,16 @@ class_weights_array = class_weight.compute_class_weight(class_weight="balanced",
 class_weights = dict(enumerate(class_weights_array))
 
 
+# Set default values
+DEFAULT_EPOCHS = 200
+DEFAULT_LEARNING_RATE = 0.0005
+
+# Read environment variables with defaults
+epochs = int(os.getenv('EPOCHS', DEFAULT_EPOCHS))
+learning_rate = float(os.getenv('LEARNING_RATE', DEFAULT_LEARNING_RATE))
+
+LOGGER.info(f"Using hyperparameters: epochs={epochs}, learning_rate={learning_rate}")
+
 # Create the CNN model
 LOGGER.info("Creating CNN model based on the original architecture")
 model = models.Sequential()
@@ -131,8 +141,8 @@ model.add(layers.Dense(128, activation="relu"))  # Increased neurons
 model.add(layers.Dropout(0.5))
 model.add(layers.Dense(4, activation="softmax"))
 
-# Compile the model
-optimizer = Adam(learning_rate=0.0005)
+# Compile the model with dynamic learning rate
+optimizer = Adam(learning_rate=learning_rate)
 model.compile(optimizer=optimizer, loss="sparse_categorical_crossentropy", metrics=["accuracy"])
 model.summary()
 
@@ -143,11 +153,12 @@ early_stopping = EarlyStopping(monitor='val_loss', patience=10, restore_best_wei
 history = model.fit(
     X_train,
     y_train,
-    epochs=200,
+    epochs=epochs,  # Use dynamic number of epochs
     validation_data=(X_val, y_val),
     callbacks=[early_stopping],
     class_weight=class_weights,
 )
+
 
 
 # Evaluate the model on test data
