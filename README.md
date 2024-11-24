@@ -4,7 +4,8 @@
 This repository contains the implementation of a Convolutional Neural Network (CNN) model for image classification. The project aims to achieve high accuracy in identifying classes of images through an efficient deep learning approach. The repository also incorporates a robust CI/CD pipeline for seamless integration, testing, and deployment.
 
 ## Purpose
-The CNN model is designed to classify images into predefined categories with high precision. It has been trained on the [name of dataset, e.g., CIFAR-10, ImageNet, or custom dataset] to demonstrate its effectiveness.
+The CNN model is designed to classify images into predefined categories with high precision. We want to classify yes/no images that can be: circled, not circled, ticked and not ticked.
+
 
 ## Model Details
 - **Architecture**: The model is a custom-built CNN with the following layers:
@@ -16,14 +17,14 @@ The CNN model is designed to classify images into predefined categories with hig
 - **Optimizer**: Adam optimizer for efficient gradient descent.
 - **Loss Function**: Cross-entropy loss to measure prediction error.
 - **Performance**:
-  - Training Accuracy: [e.g., 95%]
-  - Validation Accuracy: [e.g., 92%]
-  - Test Accuracy: [e.g., 90%]
+  - Training Accuracy: 
+  - Validation Accuracy: 
+  - Test Accuracy: 
 
 ## Achieving the Goal
 1. **Dataset**:
    - The dataset consists of >1000 images categorized into 4 classes.
-   - Preprocessing includes resizing, normalization, and data augmentation techniques such as flipping, rotation, and zooming.
+   - Preprocessing includes resizing, normalization. Data augmentation techniques such as flipping, rotation, and zooming has not been tried yet.
 2. **Training**:
    - The model is trained on a GPU-enabled environment for faster computation.
    - Training involves multiple epochs with checkpoints for saving the best model.
@@ -35,9 +36,6 @@ The CNN model is designed to classify images into predefined categories with hig
 ```
 repo/
 ├── dataset/                 # folder with labelled images
-├── tests/
-│   ├── test_model.py        # Unit tests for the CNN model
-│   ├── test_pipeline.py     # Integration tests for the pipeline
 ├── .github/
 │   ├── workflows               # CI/CD pipeline configuration
 │   ├── release.yml             # workflow for automated semantic release tagging
