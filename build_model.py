@@ -111,8 +111,8 @@ DEFAULT_EPOCHS = 200
 DEFAULT_LEARNING_RATE = 0.0005
 
 # Read environment variables with defaults
-epochs = int(os.getenv("EPOCHS", DEFAULT_EPOCHS))
-learning_rate = float(os.getenv("LEARNING_RATE", DEFAULT_LEARNING_RATE))
+epochs = int(os.getenv('EPOCHS', DEFAULT_EPOCHS))
+learning_rate = float(os.getenv('LEARNING_RATE', DEFAULT_LEARNING_RATE))
 
 LOGGER.info(f"Using hyperparameters: epochs={epochs}, learning_rate={learning_rate}")
 
@@ -147,7 +147,7 @@ model.compile(optimizer=optimizer, loss="sparse_categorical_crossentropy", metri
 model.summary()
 
 # Early stopping callback
-early_stopping = EarlyStopping(monitor="val_loss", patience=10, restore_best_weights=True)
+early_stopping = EarlyStopping(monitor='val_loss', patience=10, restore_best_weights=True)
 
 # Train the model without data augmentation
 history = model.fit(
@@ -159,6 +159,36 @@ history = model.fit(
     class_weight=class_weights,
 )
 
+# Create a figure with a specified size
+plt.figure(figsize=(12, 5))
+
+# First subplot for Accuracy
+plt.subplot(1, 2, 1)
+plt.plot(history.history["accuracy"], label="Training Accuracy", color="blue")
+plt.plot(history.history["val_accuracy"], label="Validation Accuracy", color="orange")
+plt.xlabel("Epoch")
+plt.ylabel("Accuracy")
+plt.ylim([0, 1])
+plt.legend(loc="lower right")
+plt.title("Model Accuracy")
+
+# Second subplot for Loss
+plt.subplot(1, 2, 2)
+plt.plot(history.history["loss"], label="Training Loss", color="blue")
+plt.plot(history.history["val_loss"], label="Validation Loss", color="orange")
+plt.xlabel("Epoch")
+plt.ylabel("Loss")
+plt.legend(loc="upper right")
+plt.title("Model Loss")
+
+# Adjust layout to prevent overlap
+plt.tight_layout()
+
+# Save the figure to a file instead of displaying it
+plt.savefig("training_metrics.png")  # You can change the filename and format as needed
+
+# Optionally, you can close the figure if you're running this in a script
+plt.close()
 
 # Evaluate the model on test data
 test_loss, test_acc = model.evaluate(X_test, y_test, verbose=2)
@@ -173,9 +203,11 @@ y_pred = np.argmax(y_pred_probs, axis=1)
 LOGGER.info(f"\nClassification Report\n {classification_report(y_test, y_pred, target_names=label_mapping.keys())}")
 
 
+
 # Confusion Matrix
 conf_mat = confusion_matrix(y_test, y_pred)
 LOGGER.info(f"Confusion Matrix:\n {conf_mat}")
 
 
-model.save("image_classifier.keras")
+
+model.save('image_classifier.keras')
