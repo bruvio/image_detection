@@ -1,3 +1,10 @@
+# [2.5.0](https://github.com/bruvio/image_detection/compare/2.4.0...2.5.0) (2024-11-25)
+
+
+### Features
+
+* saving confusion matrix ([210e8f7](https://github.com/bruvio/image_detection/commit/210e8f743a8ca8d62dcfe652e3670303e31f91da))
+
 # [2.4.0](https://github.com/bruvio/image_detection/compare/2.3.0...2.4.0) (2024-11-25)
 
 
