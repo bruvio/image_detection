@@ -1,12 +1,10 @@
 import os
 import cv2
 import logging
-from io import BytesIO
 from collections import defaultdict
 from tensorflow.keras.models import load_model
-from tensorflow.keras.utils import plot_model
 from sklearn.metrics import classification_report, confusion_matrix, accuracy_score
-from main import *
+from main import build_consent, annotate_image
 import numpy as np
 import sys
 import json
