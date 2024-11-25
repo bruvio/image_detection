@@ -1,3 +1,10 @@
+# [2.4.0](https://github.com/bruvio/image_detection/compare/2.3.0...2.4.0) (2024-11-25)
+
+
+### Features
+
+* saving training metrics ([fd7dcf5](https://github.com/bruvio/image_detection/commit/fd7dcf5b080fdcf298955ee345e915ccc4221e44))
+
 # [2.3.0](https://github.com/bruvio/image_detection/compare/2.2.0...2.3.0) (2024-11-24)
 
 
