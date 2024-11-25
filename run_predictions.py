@@ -13,14 +13,14 @@ import json
 
 # Initialize logging
 LOGGER = logging.getLogger(__name__)
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
 # **New Section: Read Environment Variables for Configurable Parameters**
 # Set default values
 DEFAULT_THRESHOLD = 0.8
 
 # Read environment variables with defaults
-threshold = float(os.getenv('THRESHOLD', DEFAULT_THRESHOLD))
+threshold = float(os.getenv("THRESHOLD", DEFAULT_THRESHOLD))
 LOGGER.info(f"Using threshold: {threshold}")
 
 # Define paths and settings
@@ -59,6 +59,7 @@ LOGGER.info("\n".join(model_summary))
 # **Evaluate Model Accuracy on Test Set Before Running Predictions**
 # Assuming 'dataset/images_test' contains labeled images structured in subfolders by label
 
+
 # Function to load and preprocess images for evaluation
 def load_evaluation_data(folder):
     images = []
@@ -74,7 +75,7 @@ def load_evaluation_data(folder):
             LOGGER.warning(f"Unknown label '{label}' found in {folder}, skipping.")
             continue
         for file in os.listdir(label_path):
-            if file.lower().endswith(('.png', '.jpg', '.jpeg', '.bmp', '.gif')):
+            if file.lower().endswith((".png", ".jpg", ".jpeg", ".bmp", ".gif")):
                 img_path = os.path.join(label_path, file)
                 img = cv2.imread(img_path, cv2.IMREAD_GRAYSCALE)
                 if img is not None:
@@ -89,6 +90,7 @@ def load_evaluation_data(folder):
     images = np.array(images).reshape(-1, 140, 80, 1) / 255.0  # Normalize
     labels = np.array(labels)
     return images, labels, reverse_label_mapping
+
 
 # Load evaluation data
 LOGGER.info("Loading evaluation data for computing overall accuracy.")
@@ -110,12 +112,15 @@ all_true_labels = []
 false_positives = []
 false_negatives = []
 
+
 # Function to list files in a folder
 def list_files_in_folder(folder, exts=("PNG", "JPG", "JPEG", "BMP", "GIF")):
     return [
-        file for file in os.listdir(folder)
+        file
+        for file in os.listdir(folder)
         if file.upper().endswith(exts) and os.path.isfile(os.path.join(folder, file))
     ]
+
 
 # Process each folder for detailed predictions
 for root_folder in folder_list:
@@ -175,21 +180,25 @@ for root_folder in folder_list:
                             results[label]["true_positive"] += 1
                         else:
                             results[label]["false_negative"] += 1
-                            false_negatives.append({
-                                "file": file_path,
-                                "predicted_label": predicted_label,
-                                "confidence": confidence,
-                                "real_label": real_label,
-                            })
+                            false_negatives.append(
+                                {
+                                    "file": file_path,
+                                    "predicted_label": predicted_label,
+                                    "confidence": confidence,
+                                    "real_label": real_label,
+                                }
+                            )
                     else:
                         if label == predicted_label and prob >= threshold:
                             results[label]["false_positive"] += 1
-                            false_positives.append({
-                                "file": file_path,
-                                "predicted_label": predicted_label,
-                                "confidence": confidence,
-                                "real_label": real_label,
-                            })
+                            false_positives.append(
+                                {
+                                    "file": file_path,
+                                    "predicted_label": predicted_label,
+                                    "confidence": confidence,
+                                    "real_label": real_label,
+                                }
+                            )
                         else:
                             results[label]["true_negative"] += 1
 
@@ -197,7 +206,9 @@ for root_folder in folder_list:
                 if predicted_label == real_label and confidence >= threshold:
                     LOGGER.info(f"Correct Prediction: {predicted_label} (Confidence: {confidence:.2f})")
                 else:
-                    LOGGER.warning(f"Incorrect Prediction: {predicted_label} (Confidence: {confidence:.2f}), Real Label: {real_label}")
+                    LOGGER.warning(
+                        f"Incorrect Prediction: {predicted_label} (Confidence: {confidence:.2f}), Real Label: {real_label}"
+                    )
 
                 # Build consent dictionary
                 consent = build_consent(result_payload, threshold)
@@ -239,12 +250,16 @@ for label, metrics in results.items():
 # **Log False Positives**
 LOGGER.info("\n=== False Positives ===")
 for fp in false_positives:
-    LOGGER.info(f"File: {fp['file']} - Predicted: {fp['predicted_label']} (Confidence: {fp['confidence']:.2f}), Real: {fp['real_label']}")
+    LOGGER.info(
+        f"File: {fp['file']} - Predicted: {fp['predicted_label']} (Confidence: {fp['confidence']:.2f}), Real: {fp['real_label']}"
+    )
 
 # **Log False Negatives**
 LOGGER.info("\n=== False Negatives ===")
 for fn in false_negatives:
-    LOGGER.info(f"File: {fn['file']} - Predicted: {fn['predicted_label']} (Confidence: {fn['confidence']:.2f}), Real: {fn['real_label']}")
+    LOGGER.info(
+        f"File: {fn['file']} - Predicted: {fn['predicted_label']} (Confidence: {fn['confidence']:.2f}), Real: {fn['real_label']}"
+    )
 
 # **Optional: Save Detailed Metrics to a JSON File**
 report_data = {
@@ -253,7 +268,7 @@ report_data = {
     "overall_accuracy": overall_accuracy,
     "detailed_metrics": {label: metrics for label, metrics in results.items()},
     "false_positives": false_positives,
-    "false_negatives": false_negatives
+    "false_negatives": false_negatives,
 }
 
 with open("detailed_metrics.json", "w") as f:
