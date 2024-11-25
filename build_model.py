@@ -11,6 +11,7 @@ from sklearn.utils import class_weight
 from sklearn.metrics import classification_report, confusion_matrix
 import logging
 import random
+import seaborn as sns
 
 # Set the random seeds for reproducibility
 os.environ["PYTHONHASHSEED"] = "0"
@@ -180,15 +181,11 @@ plt.xlabel("Epoch")
 plt.ylabel("Loss")
 plt.legend(loc="upper right")
 plt.title("Model Loss")
-
 # Adjust layout to prevent overlap
 plt.tight_layout()
-
-# Save the figure to a file instead of displaying it
 plt.savefig("training_metrics.png")  # You can change the filename and format as needed
 
-# Optionally, you can close the figure if you're running this in a script
-plt.close()
+
 
 # Evaluate the model on test data
 test_loss, test_acc = model.evaluate(X_test, y_test, verbose=2)
@@ -207,7 +204,21 @@ LOGGER.info(f"\nClassification Report\n {classification_report(y_test, y_pred, t
 # Confusion Matrix
 conf_mat = confusion_matrix(y_test, y_pred)
 LOGGER.info(f"Confusion Matrix:\n {conf_mat}")
+# Create ordered list of class names based on label_mapping
+label_mapping = {"ticked": 0, "unticked": 1, "circled_yes": 2, "circled_no": 3}
+# Create a list of class names ordered by their label indices
+class_names = [""] * len(label_mapping)
+for class_name, index in label_mapping.items():
+    class_names[index] = class_name
 
-
+# Plot the confusion matrix
+plt.figure(figsize=(8, 6))
+sns.heatmap(cm, annot=True, fmt="d", cmap="Blues", xticklabels=class_names, yticklabels=class_names)
+plt.xlabel("Predicted Label")
+plt.ylabel("True Label")
+plt.title("Confusion Matrix")
+plt.tight_layout()
+plt.savefig("confusion_matrix.png")
+plt.close()
 
 model.save('image_classifier.keras')

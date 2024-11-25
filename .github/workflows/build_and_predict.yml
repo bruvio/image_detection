@@ -14,7 +14,7 @@ on:
       learning_rate:
         description: 'Learning rate for the optimizer'
         required: false
-        default: '0.0005'
+        default: '0.0002'
 
 jobs:
   build-and-predict:
@@ -68,6 +68,7 @@ jobs:
           path: |
             image_classifier.keras
             training_metrics.png
+            confusion_matrix.png
 
       # Download Model Artifact
       - name: Download Model Artifact
