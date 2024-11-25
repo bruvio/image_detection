@@ -898,8 +898,6 @@ def annotate_image_openCV(image, result_payload, output_path, file_name_prefix="
 ##### KERAS model
 
 
-
-
 def process_image_with_model(input_bytesio: BytesIO, threshold: float, model) -> dict:
     """
     Processes an image and predicts its status as ticked/unticked and circled/not circled.

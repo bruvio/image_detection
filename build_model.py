@@ -111,8 +111,8 @@ DEFAULT_EPOCHS = 200
 DEFAULT_LEARNING_RATE = 0.0005
 
 # Read environment variables with defaults
-epochs = int(os.getenv('EPOCHS', DEFAULT_EPOCHS))
-learning_rate = float(os.getenv('LEARNING_RATE', DEFAULT_LEARNING_RATE))
+epochs = int(os.getenv("EPOCHS", DEFAULT_EPOCHS))
+learning_rate = float(os.getenv("LEARNING_RATE", DEFAULT_LEARNING_RATE))
 
 LOGGER.info(f"Using hyperparameters: epochs={epochs}, learning_rate={learning_rate}")
 
@@ -147,7 +147,7 @@ model.compile(optimizer=optimizer, loss="sparse_categorical_crossentropy", metri
 model.summary()
 
 # Early stopping callback
-early_stopping = EarlyStopping(monitor='val_loss', patience=10, restore_best_weights=True)
+early_stopping = EarlyStopping(monitor="val_loss", patience=10, restore_best_weights=True)
 
 # Train the model without data augmentation
 history = model.fit(
@@ -158,7 +158,6 @@ history = model.fit(
     callbacks=[early_stopping],
     class_weight=class_weights,
 )
-
 
 
 # Evaluate the model on test data
@@ -174,11 +173,9 @@ y_pred = np.argmax(y_pred_probs, axis=1)
 LOGGER.info(f"\nClassification Report\n {classification_report(y_test, y_pred, target_names=label_mapping.keys())}")
 
 
-
 # Confusion Matrix
 conf_mat = confusion_matrix(y_test, y_pred)
 LOGGER.info(f"Confusion Matrix:\n {conf_mat}")
 
 
-
-model.save('image_classifier.keras')
+model.save("image_classifier.keras")
