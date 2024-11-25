@@ -1,3 +1,10 @@
+## [2.5.1](https://github.com/bruvio/image_detection/compare/2.5.0...2.5.1) (2024-11-25)
+
+
+### Bug Fixes
+
+* syntax error ([499d2f2](https://github.com/bruvio/image_detection/commit/499d2f2300a5205442b99accd79e693e803e26ae))
+
 # [2.5.0](https://github.com/bruvio/image_detection/compare/2.4.0...2.5.0) (2024-11-25)
 
 
