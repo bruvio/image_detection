@@ -178,7 +178,7 @@ for train_index, val_index in skf.split(image_data, labels):
     # Callbacks
     early_stopping = EarlyStopping(monitor="val_loss", patience=10, restore_best_weights=True)
     reduce_lr = ReduceLROnPlateau(monitor="val_loss", factor=0.5, patience=5, min_lr=1e-7)
-    checkpoint = ModelCheckpoint(f"best_model_fold_{fold_no}.h5", monitor="val_loss", save_best_only=True)
+    checkpoint = ModelCheckpoint(f"best_model_fold_{fold_no}.keras", monitor="val_loss", save_best_only=True)
     callbacks = [early_stopping, reduce_lr, checkpoint]
 
     # Train the model
