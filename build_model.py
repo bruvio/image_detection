@@ -95,43 +95,27 @@ LOGGER.info(f"Using hyperparameters: epochs={epochs}, learning_rate={learning_ra
 # Function to build the CNN model
 def build_model():
     model = models.Sequential()
+    model.add(layers.Input(shape=(140, 80, 1)))
 
     # First convolutional block
-    model.add(layers.Input(shape=(140, 80, 1)))
-    model.add(layers.Conv2D(64, (3, 3), padding='same'))
-    model.add(layers.BatchNormalization())
+    model.add(layers.Conv2D(64, (3, 3), padding='same', kernel_regularizer=l2(0.001)))
     model.add(layers.Activation('relu'))
-    model.add(layers.Conv2D(64, (3, 3), padding='same'))
     model.add(layers.BatchNormalization())
-    model.add(layers.Activation('relu'))
     model.add(layers.MaxPooling2D(pool_size=(2, 2)))
-    model.add(layers.Dropout(0.3))
+    model.add(layers.Dropout(0.4))  # Increased dropout rate
 
     # Second convolutional block
-    model.add(layers.Conv2D(128, (3, 3), padding='same'))
-    model.add(layers.BatchNormalization())
+    model.add(layers.Conv2D(128, (3, 3), padding='same', kernel_regularizer=l2(0.001)))
     model.add(layers.Activation('relu'))
-    model.add(layers.Conv2D(128, (3, 3), padding='same'))
     model.add(layers.BatchNormalization())
-    model.add(layers.Activation('relu'))
     model.add(layers.MaxPooling2D(pool_size=(2, 2)))
-    model.add(layers.Dropout(0.4))
-
-    # Third convolutional block
-    model.add(layers.Conv2D(256, (3, 3), padding='same'))
-    model.add(layers.BatchNormalization())
-    model.add(layers.Activation('relu'))
-    model.add(layers.Conv2D(256, (3, 3), padding='same'))
-    model.add(layers.BatchNormalization())
-    model.add(layers.Activation('relu'))
-    model.add(layers.MaxPooling2D(pool_size=(2, 2)))
-    model.add(layers.Dropout(0.5))
+    model.add(layers.Dropout(0.5))  # Increased dropout rate
 
     # Flatten and dense layers
     model.add(layers.Flatten())
-    model.add(layers.Dense(512, kernel_regularizer=l2(0.001)))
-    model.add(layers.BatchNormalization())
+    model.add(layers.Dense(256, kernel_regularizer=l2(0.001)))  # Reduced neurons
     model.add(layers.Activation('relu'))
+    model.add(layers.BatchNormalization())
     model.add(layers.Dropout(0.5))
     model.add(layers.Dense(4, activation='softmax'))
 
@@ -179,11 +163,13 @@ for train_index, val_index in skf.split(image_data, labels):
 
     # Build and compile the model for each fold
     model = build_model()
-    optimizer = Adam(learning_rate=learning_rate)
+    # optimizer = Adam(learning_rate=learning_rate)
+    optimizer = tf.keras.optimizers.SGD(learning_rate=1e-4, momentum=0.9)
+
     model.compile(optimizer=optimizer, loss="sparse_categorical_crossentropy", metrics=["accuracy"])
 
     # Callbacks
-    early_stopping = EarlyStopping(monitor='val_loss', patience=10, restore_best_weights=True)
+    early_stopping = EarlyStopping(monitor='val_loss', patience=5, restore_best_weights=True)
     reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=5, min_lr=1e-7)
     checkpoint = ModelCheckpoint(f'best_model_fold_{fold_no}.keras', monitor='val_loss', save_best_only=True)
     callbacks = [early_stopping, reduce_lr, checkpoint]
