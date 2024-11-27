@@ -19,7 +19,7 @@ on:
 jobs:
   build-and-predict:
     runs-on: ubuntu-latest
-
+    timeout-minutes: 1440
     # Set Environment Variables from Inputs
     env:
       EPOCHS: ${{ github.event.inputs.epochs }}
