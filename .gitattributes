@@ -3,3 +3,4 @@ simple-model filter=lfs diff=lfs merge=lfs -text
 complex-model filter=lfs diff=lfs merge=lfs -text
 image_classifier_final.keras filter=lfs diff=lfs merge=lfs -text
 complex-model/*.keras filter=lfs diff=lfs merge=lfs -text
+complex-model/** filter=lfs diff=lfs merge=lfs -text
