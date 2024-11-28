@@ -71,7 +71,8 @@ jobs:
         with:
           name: image_model
           path: |
-            *.keras
+            best_model_fold_*.keras
+            image_classifier_final_*.keras
             *.png
             logfile.log
 
