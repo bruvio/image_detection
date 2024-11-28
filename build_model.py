@@ -26,6 +26,25 @@ os.environ["TF_DETERMINISTIC_OPS"] = "1"
 logging.basicConfig(level=logging.INFO)
 LOGGER = logging.getLogger(__name__)
 
+# Create handlers
+console_handler = logging.StreamHandler()
+file_handler = logging.FileHandler('logfile.log')
+
+# Set levels for handlers (optional, INFO is default)
+console_handler.setLevel(logging.INFO)
+file_handler.setLevel(logging.INFO)
+
+# Create formatters and add them to handlers
+console_formatter = logging.Formatter('%(message)s')
+file_formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+
+console_handler.setFormatter(console_formatter)
+file_handler.setFormatter(file_formatter)
+
+# Add handlers to the logger
+LOGGER.addHandler(console_handler)
+LOGGER.addHandler(file_handler)
+
 # Load and preprocess images
 def load_images_from_folder(folder):
     current_dir = os.getcwd()
