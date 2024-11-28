@@ -141,7 +141,7 @@ def build_simple_model():
     model.add(layers.Dense(128, activation="relu"))  # Increased neurons
     model.add(layers.Dropout(0.5))
     model.add(layers.Dense(4, activation="softmax"))
-    return model
+    return model, "simple"
 
 
 def build_complex_model():
@@ -187,7 +187,7 @@ def build_complex_model():
     model.add(layers.Dropout(0.5))
     model.add(layers.Dense(4, activation="softmax"))
 
-    return model
+    return model, "complex"
 
 
 def build_model():
@@ -241,7 +241,7 @@ for train_index, val_index in skf.split(image_data, labels):
     datagen.fit(X_train_fold)
 
     # Build and compile the model for each fold
-    model = build_model()
+    model, what_model = build_model()
     optimizer = Adam(learning_rate=learning_rate)
     model.compile(optimizer=optimizer, loss="sparse_categorical_crossentropy", metrics=["accuracy"])
     model.summary()
@@ -299,7 +299,7 @@ for train_index, val_index in skf.split(image_data, labels):
     plt.title(f"Model Loss - Fold {fold_no}")
 
     plt.tight_layout()
-    plt.savefig(f"training_metrics_fold_{fold_no}.png")
+    plt.savefig(f"training_metrics_fold_{fold_no}_{what_model}_model.png")
     plt.close()
 
     # Confusion Matrix and Classification Report
@@ -321,7 +321,7 @@ for train_index, val_index in skf.split(image_data, labels):
     plt.ylabel("True Label")
     plt.title(f"Confusion Matrix - Fold {fold_no}")
     plt.tight_layout()
-    plt.savefig(f"confusion_matrix_fold_{fold_no}.png")
+    plt.savefig(f"confusion_matrix_fold_{fold_no}_{what_model}_model.png")
     plt.close()
 
     fold_no += 1
@@ -338,4 +338,4 @@ LOGGER.info(f"> Loss: {np.mean(loss_per_fold):.4f}")
 LOGGER.info("------------------------------------------------------------------------")
 
 # Saving the final model (Optional: You might want to save the model with the best validation accuracy)
-model.save("image_classifier_final.keras")
+model.save(f"image_classifier_final_{what_model}_model.keras")
