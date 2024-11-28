@@ -26,10 +26,10 @@ folder_list = ["dataset/images_test"]
 widths = []
 heights = []
 aspect_ratios = []
-
+USE_MODEL = os.getenv("USE_MODEL", "simple")
 # **Load the Model**
 # model_path = "image_classifier.keras"
-model_path = "image_classifier_final.keras"
+model_path = f"image_classifier_final_{USE_MODEL}_model.keras"
 if not os.path.exists(model_path):
     LOGGER.error(f"Model file {model_path} does not exist.")
     sys.exit(1)
