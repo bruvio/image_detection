@@ -192,10 +192,10 @@ def build_complex_model():
 
 def build_model():
     # Get the environment variable
-    selected_function = os.getenv("USE_MODEL", "A")  # Default to 'A'
+    selected_function = os.getenv("USE_MODEL", "simple")  # Default to 'simple'
 
     # Map environment variable to functions
-    function_map = {"A": build_simple_model, "B": build_complex_model}
+    function_map = {"simple": build_simple_model, "complex": build_complex_model}
 
     # Call the selected function
     return function_map.get(selected_function, lambda: "Invalid function selected")()
