@@ -1,0 +1,233 @@
+2024-11-28 12:43:07,426 - INFO - Loading images from dataset
+2024-11-28 12:43:07,426 - INFO - Folder path is /Users/brunoviola/WORK/detect_yes_no_answers/dataset/
+2024-11-28 12:43:07,426 - INFO - Processing label: .DS_Store
+2024-11-28 12:43:07,426 - INFO - Label '.DS_Store' folder is /Users/brunoviola/WORK/detect_yes_no_answers/dataset/.DS_Store
+2024-11-28 12:43:07,426 - INFO - Processing label: ticked
+2024-11-28 12:43:07,426 - INFO - Label 'ticked' folder is /Users/brunoviola/WORK/detect_yes_no_answers/dataset/ticked
+2024-11-28 12:43:07,461 - WARNING - Failed to load image /Users/brunoviola/WORK/detect_yes_no_answers/dataset/ticked/.DS_Store
+2024-11-28 12:43:07,527 - WARNING - Failed to load image /Users/brunoviola/WORK/detect_yes_no_answers/dataset/ticked/ok/.DS_Store
+2024-11-28 12:43:07,527 - WARNING - Failed to load image /Users/brunoviola/WORK/detect_yes_no_answers/dataset/ticked/ok/random_9deb905c/.DS_Store
+2024-11-28 12:43:07,555 - WARNING - Failed to load image /Users/brunoviola/WORK/detect_yes_no_answers/dataset/ticked/ok/random_6e9a8c3c/.DS_Store
+2024-11-28 12:43:07,569 - WARNING - Failed to load image /Users/brunoviola/WORK/detect_yes_no_answers/dataset/ticked/ok/random_5e6d1e26/.DS_Store
+2024-11-28 12:43:07,596 - WARNING - Failed to load image /Users/brunoviola/WORK/detect_yes_no_answers/dataset/ticked/ok/random_1d616941/.DS_Store
+2024-11-28 12:43:07,638 - WARNING - Failed to load image /Users/brunoviola/WORK/detect_yes_no_answers/dataset/ticked/ok/random_2_selection/.DS_Store
+2024-11-28 12:43:07,640 - WARNING - Failed to load image /Users/brunoviola/WORK/detect_yes_no_answers/dataset/ticked/processed_images/.DS_Store
+2024-11-28 12:43:07,663 - INFO - Processing label: circled_yes
+2024-11-28 12:43:07,663 - INFO - Label 'circled_yes' folder is /Users/brunoviola/WORK/detect_yes_no_answers/dataset/circled_yes
+2024-11-28 12:43:07,672 - WARNING - Failed to load image /Users/brunoviola/WORK/detect_yes_no_answers/dataset/circled_yes/.DS_Store
+2024-11-28 12:43:07,705 - WARNING - Failed to load image /Users/brunoviola/WORK/detect_yes_no_answers/dataset/circled_yes/ok/.DS_Store
+2024-11-28 12:43:07,706 - WARNING - Failed to load image /Users/brunoviola/WORK/detect_yes_no_answers/dataset/circled_yes/ok/random_99bfc5a9/.DS_Store
+2024-11-28 12:43:07,710 - WARNING - Failed to load image /Users/brunoviola/WORK/detect_yes_no_answers/dataset/circled_yes/ok/random_7_selection/.DS_Store
+2024-11-28 12:43:07,713 - WARNING - Failed to load image /Users/brunoviola/WORK/detect_yes_no_answers/dataset/circled_yes/ok/ok_12/.DS_Store
+2024-11-28 12:43:07,716 - WARNING - Failed to load image /Users/brunoviola/WORK/detect_yes_no_answers/dataset/circled_yes/ok/random_1_selection/.DS_Store
+2024-11-28 12:43:07,728 - WARNING - Failed to load image /Users/brunoviola/WORK/detect_yes_no_answers/dataset/circled_yes/ok/ok_9/.DS_Store
+2024-11-28 12:43:07,730 - WARNING - Failed to load image /Users/brunoviola/WORK/detect_yes_no_answers/dataset/circled_yes/ok/ok_7/.DS_Store
+2024-11-28 12:43:07,734 - WARNING - Failed to load image /Users/brunoviola/WORK/detect_yes_no_answers/dataset/circled_yes/ok/random_6_selection/.DS_Store
+2024-11-28 12:43:07,737 - WARNING - Failed to load image /Users/brunoviola/WORK/detect_yes_no_answers/dataset/circled_yes/ok/random_5ec422a3/.DS_Store
+2024-11-28 12:43:07,742 - WARNING - Failed to load image /Users/brunoviola/WORK/detect_yes_no_answers/dataset/circled_yes/ok/random_4fbf333e/.DS_Store
+2024-11-28 12:43:07,745 - WARNING - Failed to load image /Users/brunoviola/WORK/detect_yes_no_answers/dataset/circled_yes/ok/ok_1/.DS_Store
+2024-11-28 12:43:07,749 - WARNING - Failed to load image /Users/brunoviola/WORK/detect_yes_no_answers/dataset/circled_yes/ok/ok_8/.DS_Store
+2024-11-28 12:43:07,758 - WARNING - Failed to load image /Users/brunoviola/WORK/detect_yes_no_answers/dataset/circled_yes/ok/random_9818bae8/.DS_Store
+2024-11-28 12:43:07,760 - WARNING - Failed to load image /Users/brunoviola/WORK/detect_yes_no_answers/dataset/circled_yes/ok/random_96ec7c4d/.DS_Store
+2024-11-28 12:43:07,768 - WARNING - Failed to load image /Users/brunoviola/WORK/detect_yes_no_answers/dataset/circled_yes/ok/random_0_selection/.DS_Store
+2024-11-28 12:43:07,776 - WARNING - Failed to load image /Users/brunoviola/WORK/detect_yes_no_answers/dataset/circled_yes/ok/random_955bb239/.DS_Store
+2024-11-28 12:43:07,789 - WARNING - Failed to load image /Users/brunoviola/WORK/detect_yes_no_answers/dataset/circled_yes/ok/random_3d054f62/.DS_Store
+2024-11-28 12:43:07,794 - WARNING - Failed to load image /Users/brunoviola/WORK/detect_yes_no_answers/dataset/circled_yes/ok/ok_11/.DS_Store
+2024-11-28 12:43:07,804 - WARNING - Failed to load image /Users/brunoviola/WORK/detect_yes_no_answers/dataset/circled_yes/ok/random_09bd4113/.DS_Store
+2024-11-28 12:43:07,806 - WARNING - Failed to load image /Users/brunoviola/WORK/detect_yes_no_answers/dataset/circled_yes/ok/random_3_selection/.DS_Store
+2024-11-28 12:43:07,816 - WARNING - Failed to load image /Users/brunoviola/WORK/detect_yes_no_answers/dataset/circled_yes/ok/ok_4/.DS_Store
+2024-11-28 12:43:07,822 - WARNING - Failed to load image /Users/brunoviola/WORK/detect_yes_no_answers/dataset/circled_yes/ok/ok_3/.DS_Store
+2024-11-28 12:43:07,824 - WARNING - Failed to load image /Users/brunoviola/WORK/detect_yes_no_answers/dataset/circled_yes/ok/random_3ad47c16/.DS_Store
+2024-11-28 12:43:07,827 - WARNING - Failed to load image /Users/brunoviola/WORK/detect_yes_no_answers/dataset/circled_yes/ok/random_9_selection/.DS_Store
+2024-11-28 12:43:07,830 - WARNING - Failed to load image /Users/brunoviola/WORK/detect_yes_no_answers/dataset/circled_yes/ok/random_af960b4c/.DS_Store
+2024-11-28 12:43:07,839 - WARNING - Failed to load image /Users/brunoviola/WORK/detect_yes_no_answers/dataset/circled_yes/ok/ok_5/.DS_Store
+2024-11-28 12:43:07,861 - WARNING - Failed to load image /Users/brunoviola/WORK/detect_yes_no_answers/dataset/circled_yes/ok/random_ad05bfe0/.DS_Store
+2024-11-28 12:43:07,868 - WARNING - Failed to load image /Users/brunoviola/WORK/detect_yes_no_answers/dataset/circled_yes/ok/random_2_selection/.DS_Store
+2024-11-28 12:43:07,870 - WARNING - Failed to load image /Users/brunoviola/WORK/detect_yes_no_answers/dataset/circled_yes/ok/random_e12599f6/.DS_Store
+2024-11-28 12:43:07,873 - WARNING - Failed to load image /Users/brunoviola/WORK/detect_yes_no_answers/dataset/circled_yes/ok/random_0b78ccb2/.DS_Store
+2024-11-28 12:43:07,877 - WARNING - Failed to load image /Users/brunoviola/WORK/detect_yes_no_answers/dataset/circled_yes/processed_images/.DS_Store
+2024-11-28 12:43:07,930 - INFO - Processing label: images_test
+2024-11-28 12:43:07,930 - INFO - Processing label: circled_no
+2024-11-28 12:43:07,930 - INFO - Label 'circled_no' folder is /Users/brunoviola/WORK/detect_yes_no_answers/dataset/circled_no
+2024-11-28 12:43:07,939 - WARNING - Failed to load image /Users/brunoviola/WORK/detect_yes_no_answers/dataset/circled_no/.DS_Store
+2024-11-28 12:43:07,980 - WARNING - Failed to load image /Users/brunoviola/WORK/detect_yes_no_answers/dataset/circled_no/ok/.DS_Store
+2024-11-28 12:43:07,982 - WARNING - Failed to load image /Users/brunoviola/WORK/detect_yes_no_answers/dataset/circled_no/ok/random_3370cccf/.DS_Store
+2024-11-28 12:43:07,986 - WARNING - Failed to load image /Users/brunoviola/WORK/detect_yes_no_answers/dataset/circled_no/ok/random_52c40c0f/.DS_Store
+2024-11-28 12:43:07,989 - WARNING - Failed to load image /Users/brunoviola/WORK/detect_yes_no_answers/dataset/circled_no/ok/random_7_selection/.DS_Store
+2024-11-28 12:43:07,991 - WARNING - Failed to load image /Users/brunoviola/WORK/detect_yes_no_answers/dataset/circled_no/ok/random_1837336b/.DS_Store
+2024-11-28 12:43:07,994 - WARNING - Failed to load image /Users/brunoviola/WORK/detect_yes_no_answers/dataset/circled_no/ok/random_32d2d546/.DS_Store
+2024-11-28 12:43:07,996 - WARNING - Failed to load image /Users/brunoviola/WORK/detect_yes_no_answers/dataset/circled_no/ok/random_24f44a45/.DS_Store
+2024-11-28 12:43:07,998 - WARNING - Failed to load image /Users/brunoviola/WORK/detect_yes_no_answers/dataset/circled_no/ok/random_46766f2d/.DS_Store
+2024-11-28 12:43:08,001 - WARNING - Failed to load image /Users/brunoviola/WORK/detect_yes_no_answers/dataset/circled_no/ok/random_b5840530/.DS_Store
+2024-11-28 12:43:08,005 - WARNING - Failed to load image /Users/brunoviola/WORK/detect_yes_no_answers/dataset/circled_no/ok/random_d08be6b4/.DS_Store
+2024-11-28 12:43:08,006 - WARNING - Failed to load image /Users/brunoviola/WORK/detect_yes_no_answers/dataset/circled_no/ok/random_1_selection/.DS_Store
+2024-11-28 12:43:08,012 - WARNING - Failed to load image /Users/brunoviola/WORK/detect_yes_no_answers/dataset/circled_no/ok/random_d3eea1c7/.DS_Store
+2024-11-28 12:43:08,014 - WARNING - Failed to load image /Users/brunoviola/WORK/detect_yes_no_answers/dataset/circled_no/ok/random_6_selection/.DS_Store
+2024-11-28 12:43:08,016 - WARNING - Failed to load image /Users/brunoviola/WORK/detect_yes_no_answers/dataset/circled_no/ok/random_890245e1/.DS_Store
+2024-11-28 12:43:08,018 - WARNING - Failed to load image /Users/brunoviola/WORK/detect_yes_no_answers/dataset/circled_no/ok/random_1853b05a/.DS_Store
+2024-11-28 12:43:08,022 - WARNING - Failed to load image /Users/brunoviola/WORK/detect_yes_no_answers/dataset/circled_no/ok/random_5ffcc6be/.DS_Store
+2024-11-28 12:43:08,024 - WARNING - Failed to load image /Users/brunoviola/WORK/detect_yes_no_answers/dataset/circled_no/ok/random_e5644466/.DS_Store
+2024-11-28 12:43:08,025 - WARNING - Failed to load image /Users/brunoviola/WORK/detect_yes_no_answers/dataset/circled_no/ok/random_ececcfaa/.DS_Store
+2024-11-28 12:43:08,030 - WARNING - Failed to load image /Users/brunoviola/WORK/detect_yes_no_answers/dataset/circled_no/ok/random_0_selection/.DS_Store
+2024-11-28 12:43:08,032 - WARNING - Failed to load image /Users/brunoviola/WORK/detect_yes_no_answers/dataset/circled_no/ok/random_3adbdb85/.DS_Store
+2024-11-28 12:43:08,034 - WARNING - Failed to load image /Users/brunoviola/WORK/detect_yes_no_answers/dataset/circled_no/ok/random_8_selection/.DS_Store
+2024-11-28 12:43:08,036 - WARNING - Failed to load image /Users/brunoviola/WORK/detect_yes_no_answers/dataset/circled_no/ok/random_773abbc4/.DS_Store
+2024-11-28 12:43:08,039 - WARNING - Failed to load image /Users/brunoviola/WORK/detect_yes_no_answers/dataset/circled_no/ok/random_f99075f5/.DS_Store
+2024-11-28 12:43:08,042 - WARNING - Failed to load image /Users/brunoviola/WORK/detect_yes_no_answers/dataset/circled_no/ok/random_fa8f6a6f/.DS_Store
+2024-11-28 12:43:08,046 - WARNING - Failed to load image /Users/brunoviola/WORK/detect_yes_no_answers/dataset/circled_no/ok/random_5_selection/.DS_Store
+2024-11-28 12:43:08,049 - WARNING - Failed to load image /Users/brunoviola/WORK/detect_yes_no_answers/dataset/circled_no/ok/random_c4e6bb13/.DS_Store
+2024-11-28 12:43:08,050 - WARNING - Failed to load image /Users/brunoviola/WORK/detect_yes_no_answers/dataset/circled_no/ok/random_e5e27659/.DS_Store
+2024-11-28 12:43:08,054 - WARNING - Failed to load image /Users/brunoviola/WORK/detect_yes_no_answers/dataset/circled_no/ok/random_3_selection/.DS_Store
+2024-11-28 12:43:08,056 - WARNING - Failed to load image /Users/brunoviola/WORK/detect_yes_no_answers/dataset/circled_no/ok/random_471e5653/.DS_Store
+2024-11-28 12:43:08,061 - WARNING - Failed to load image /Users/brunoviola/WORK/detect_yes_no_answers/dataset/circled_no/ok/random_af770444/.DS_Store
+2024-11-28 12:43:08,063 - WARNING - Failed to load image /Users/brunoviola/WORK/detect_yes_no_answers/dataset/circled_no/ok/random_18e80328/.DS_Store
+2024-11-28 12:43:08,066 - WARNING - Failed to load image /Users/brunoviola/WORK/detect_yes_no_answers/dataset/circled_no/ok/random_31474311/.DS_Store
+2024-11-28 12:43:08,077 - WARNING - Failed to load image /Users/brunoviola/WORK/detect_yes_no_answers/dataset/circled_no/ok/random_bd9885e8/.DS_Store
+2024-11-28 12:43:08,094 - WARNING - Failed to load image /Users/brunoviola/WORK/detect_yes_no_answers/dataset/circled_no/ok/random_b825a455/.DS_Store
+2024-11-28 12:43:08,101 - WARNING - Failed to load image /Users/brunoviola/WORK/detect_yes_no_answers/dataset/circled_no/ok/random_f3c8f8ba/.DS_Store
+2024-11-28 12:43:08,103 - WARNING - Failed to load image /Users/brunoviola/WORK/detect_yes_no_answers/dataset/circled_no/ok/random_4_selection/.DS_Store
+2024-11-28 12:43:08,109 - WARNING - Failed to load image /Users/brunoviola/WORK/detect_yes_no_answers/dataset/circled_no/ok/random_276d5d1a/.DS_Store
+2024-11-28 12:43:08,115 - WARNING - Failed to load image /Users/brunoviola/WORK/detect_yes_no_answers/dataset/circled_no/ok/random_362b6ab2/.DS_Store
+2024-11-28 12:43:08,125 - WARNING - Failed to load image /Users/brunoviola/WORK/detect_yes_no_answers/dataset/circled_no/ok/random_8cd90dc3/.DS_Store
+2024-11-28 12:43:08,129 - WARNING - Failed to load image /Users/brunoviola/WORK/detect_yes_no_answers/dataset/circled_no/ok/random_2_selection/.DS_Store
+2024-11-28 12:43:08,132 - WARNING - Failed to load image /Users/brunoviola/WORK/detect_yes_no_answers/dataset/circled_no/ok/random_94cec9f3/.DS_Store
+2024-11-28 12:43:08,134 - WARNING - Failed to load image /Users/brunoviola/WORK/detect_yes_no_answers/dataset/circled_no/processed_images/.DS_Store
+2024-11-28 12:43:08,181 - INFO - Processing label: unticked
+2024-11-28 12:43:08,181 - INFO - Label 'unticked' folder is /Users/brunoviola/WORK/detect_yes_no_answers/dataset/unticked
+2024-11-28 12:43:08,195 - WARNING - Failed to load image /Users/brunoviola/WORK/detect_yes_no_answers/dataset/unticked/.DS_Store
+2024-11-28 12:43:08,278 - WARNING - Failed to load image /Users/brunoviola/WORK/detect_yes_no_answers/dataset/unticked/ok/.DS_Store
+2024-11-28 12:43:08,292 - WARNING - Failed to load image /Users/brunoviola/WORK/detect_yes_no_answers/dataset/unticked/ok/random_bfe3f4c5/.DS_Store
+2024-11-28 12:43:08,340 - WARNING - Failed to load image /Users/brunoviola/WORK/detect_yes_no_answers/dataset/unticked/ok/random_5_selection/.DS_Store
+2024-11-28 12:43:08,353 - WARNING - Failed to load image /Users/brunoviola/WORK/detect_yes_no_answers/dataset/unticked/ok/random_9_selection/.DS_Store
+2024-11-28 12:43:08,356 - WARNING - Failed to load image /Users/brunoviola/WORK/detect_yes_no_answers/dataset/unticked/ok/random_1857cb94/.DS_Store
+2024-11-28 12:43:08,374 - WARNING - Failed to load image /Users/brunoviola/WORK/detect_yes_no_answers/dataset/unticked/processed_images/.DS_Store
+2024-11-28 12:43:08,443 - INFO - Labeling images
+2024-11-28 12:43:08,445 - INFO - 
+Number of images per label in the entire dataset:
+2024-11-28 12:43:08,445 - INFO - ticked (0): 716 images
+2024-11-28 12:43:08,445 - INFO - unticked (1): 673 images
+2024-11-28 12:43:08,445 - INFO - circled_yes (2): 766 images
+2024-11-28 12:43:08,445 - INFO - circled_no (3): 729 images
+2024-11-28 12:43:08,446 - INFO - Using hyperparameters: epochs=500, learning_rate=0.0005
+2024-11-28 12:43:08,450 - INFO - 
+Starting fold 1...
+2024-11-28 12:43:08,562 - INFO - using simple model
+2024-11-28 12:48:37,257 - INFO - Score for fold 1: loss = 0.1001; compile_metrics = 0.9705
+2024-11-28 12:48:38,124 - INFO - 
+Classification Report for fold 1:
+              precision    recall  f1-score   support
+
+      ticked       0.99      0.96      0.97       144
+    unticked       0.93      0.99      0.96       134
+ circled_yes       0.98      0.98      0.98       153
+  circled_no       0.99      0.95      0.97       146
+
+    accuracy                           0.97       577
+   macro avg       0.97      0.97      0.97       577
+weighted avg       0.97      0.97      0.97       577
+
+2024-11-28 12:48:38,126 - INFO - Confusion Matrix for fold 1:
+ [[138   6   0   0]
+ [  1 133   0   0]
+ [  0   1 150   2]
+ [  1   3   3 139]]
+2024-11-28 12:48:38,232 - INFO - 
+Starting fold 2...
+2024-11-28 12:48:38,419 - INFO - using simple model
+2024-11-28 12:58:44,778 - INFO - Score for fold 2: loss = 0.0235; compile_metrics = 0.9913
+2024-11-28 12:58:45,993 - INFO - 
+Classification Report for fold 2:
+              precision    recall  f1-score   support
+
+      ticked       1.00      0.98      0.99       143
+    unticked       0.99      1.00      0.99       135
+ circled_yes       0.99      1.00      0.99       154
+  circled_no       0.99      0.99      0.99       145
+
+    accuracy                           0.99       577
+   macro avg       0.99      0.99      0.99       577
+weighted avg       0.99      0.99      0.99       577
+
+2024-11-28 12:58:45,994 - INFO - Confusion Matrix for fold 2:
+ [[140   2   0   1]
+ [  0 135   0   0]
+ [  0   0 154   0]
+ [  0   0   2 143]]
+2024-11-28 12:58:46,094 - INFO - 
+Starting fold 3...
+2024-11-28 12:58:46,335 - INFO - using simple model
+2024-11-28 13:10:44,260 - INFO - Score for fold 3: loss = 0.0299; compile_metrics = 0.9861
+2024-11-28 13:10:44,907 - INFO - 
+Classification Report for fold 3:
+              precision    recall  f1-score   support
+
+      ticked       0.99      0.98      0.98       143
+    unticked       0.99      0.99      0.99       135
+ circled_yes       0.98      0.99      0.99       153
+  circled_no       0.99      0.99      0.99       146
+
+    accuracy                           0.99       577
+   macro avg       0.99      0.99      0.99       577
+weighted avg       0.99      0.99      0.99       577
+
+2024-11-28 13:10:44,908 - INFO - Confusion Matrix for fold 3:
+ [[140   2   1   0]
+ [  2 133   0   0]
+ [  0   0 152   1]
+ [  0   0   2 144]]
+2024-11-28 13:10:45,005 - INFO - 
+Starting fold 4...
+2024-11-28 13:10:45,213 - INFO - using simple model
+2024-11-28 13:15:41,059 - INFO - Score for fold 4: loss = 0.0625; compile_metrics = 0.9792
+2024-11-28 13:15:41,698 - INFO - 
+Classification Report for fold 4:
+              precision    recall  f1-score   support
+
+      ticked       0.99      0.96      0.97       143
+    unticked       0.96      1.00      0.98       135
+ circled_yes       0.98      0.97      0.98       153
+  circled_no       0.99      0.99      0.99       146
+
+    accuracy                           0.98       577
+   macro avg       0.98      0.98      0.98       577
+weighted avg       0.98      0.98      0.98       577
+
+2024-11-28 13:15:41,699 - INFO - Confusion Matrix for fold 4:
+ [[137   5   1   0]
+ [  0 135   0   0]
+ [  2   0 149   2]
+ [  0   0   2 144]]
+2024-11-28 13:15:41,799 - INFO - 
+Starting fold 5...
+2024-11-28 13:15:41,921 - INFO - using simple model
+2024-11-28 13:23:42,444 - INFO - Score for fold 5: loss = 0.0682; compile_metrics = 0.9740
+2024-11-28 13:23:43,154 - INFO - 
+Classification Report for fold 5:
+              precision    recall  f1-score   support
+
+      ticked       0.99      0.95      0.97       143
+    unticked       0.95      0.99      0.97       134
+ circled_yes       0.97      0.99      0.98       153
+  circled_no       0.99      0.97      0.98       146
+
+    accuracy                           0.97       576
+   macro avg       0.97      0.97      0.97       576
+weighted avg       0.97      0.97      0.97       576
+
+2024-11-28 13:23:43,155 - INFO - Confusion Matrix for fold 5:
+ [[136   6   1   0]
+ [  1 133   0   0]
+ [  0   1 151   1]
+ [  1   0   4 141]]
+2024-11-28 13:23:43,259 - INFO - ------------------------------------------------------------------------
+2024-11-28 13:23:43,259 - INFO - Score per fold
+2024-11-28 13:23:43,259 - INFO - > Fold 1 - Loss: 0.1001 - Accuracy: 97.05%
+2024-11-28 13:23:43,259 - INFO - > Fold 2 - Loss: 0.0235 - Accuracy: 99.13%
+2024-11-28 13:23:43,259 - INFO - > Fold 3 - Loss: 0.0299 - Accuracy: 98.61%
+2024-11-28 13:23:43,259 - INFO - > Fold 4 - Loss: 0.0625 - Accuracy: 97.92%
+2024-11-28 13:23:43,259 - INFO - > Fold 5 - Loss: 0.0682 - Accuracy: 97.40%
+2024-11-28 13:23:43,259 - INFO - ------------------------------------------------------------------------
+2024-11-28 13:23:43,259 - INFO - Average scores for all folds:
+2024-11-28 13:23:43,259 - INFO - > Accuracy: 98.02% (+- 0.76%)
+2024-11-28 13:23:43,259 - INFO - > Loss: 0.0568
+2024-11-28 13:23:43,259 - INFO - ------------------------------------------------------------------------
