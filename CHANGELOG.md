@@ -1,3 +1,54 @@
+# [2.6.0](https://github.com/bruvio/image_detection/compare/2.5.1...2.6.0) (2024-11-29)
+
+
+### Bug Fixes
+
+* add more logs ([9df4f38](https://github.com/bruvio/image_detection/commit/9df4f38ddb61de19d214aa14e8c25b76261ff777))
+* add option to save model ([0135726](https://github.com/bruvio/image_detection/commit/01357262b6949156042f0267b507ea85e9917ef0))
+* add option to switch between models ([9dff339](https://github.com/bruvio/image_detection/commit/9dff3393cecb83bf9f0590b892c3fe7f5f7867f2))
+* class weight error ([ee02483](https://github.com/bruvio/image_detection/commit/ee02483f62a5eb7c372251f03e4fe7d846b6275f))
+* fix high confidence in detect ticks ([560e54d](https://github.com/bruvio/image_detection/commit/560e54d88849036710ed34e82a149cf65a883b49))
+* fix imports from main ([6200eb3](https://github.com/bruvio/image_detection/commit/6200eb34db73767288fac74da269c7fb79d04401))
+* further enhancement ([744cb52](https://github.com/bruvio/image_detection/commit/744cb5266e26e6c68f7311ebe3606bb7c4fd5144))
+* hand handwritten templates for checkbox ([80bfc2a](https://github.com/bruvio/image_detection/commit/80bfc2a7ebf32420ad4031b09f1c1695290a644e))
+* hand handwritten templates for checkbox ([eba334e](https://github.com/bruvio/image_detection/commit/eba334e96dbbf0945a1efb200660623e2945423b))
+* improve confidence response payload ([e192554](https://github.com/bruvio/image_detection/commit/e1925548187b817b2f9d39c5f34b324a381155a1))
+* improve response from CNN model ([39e8600](https://github.com/bruvio/image_detection/commit/39e8600f723f15163f65664e0831f5a99e904e28))
+* improved accuracy after adding more images ([d6a720c](https://github.com/bruvio/image_detection/commit/d6a720c64e35663493db08fc405c7c7b9f1692fd))
+* increase learning rate and improve reporting ([fd286e4](https://github.com/bruvio/image_detection/commit/fd286e46ef4cda3a44844a247dd15c9cd1003bf6))
+* more improved accuracy after adding more images ([5222e05](https://github.com/bruvio/image_detection/commit/5222e05cbd3a6339a199aaddcbf1c121eb781444))
+* radius for detection of circles ([3f6a990](https://github.com/bruvio/image_detection/commit/3f6a990c9d8d557c6d46f3d7c0e179aa066ed221))
+* radius for detection of circles ([37de21e](https://github.com/bruvio/image_detection/commit/37de21ea1d43b7c47c4a3434b94805476f9d68b3))
+* set epochs and learning rate as env varoables ([c9c08c0](https://github.com/bruvio/image_detection/commit/c9c08c081a91892cc92c21425fd47205608066b5))
+* small adjustments ([65b0854](https://github.com/bruvio/image_detection/commit/65b085425b77770bfd9a0c4d67083d3512bd33ed))
+* syntax error ([2366e04](https://github.com/bruvio/image_detection/commit/2366e04856c95ee395bd2c89f487007fda78a2b5))
+* use env var to run predictions on model ([0ba1cbe](https://github.com/bruvio/image_detection/commit/0ba1cbeb103a049bd24a71aa09bce9d6b745153a))
+* using right model extension ([169c965](https://github.com/bruvio/image_detection/commit/169c965a5e8a3195ce111fef775b5b4dead866df))
+* using right model extension ([1d554d1](https://github.com/bruvio/image_detection/commit/1d554d1136282a1edad74966254139dfe53242e1))
+
+
+### Features
+
+* add function to change image resolution and create new image for training ([9caafc9](https://github.com/bruvio/image_detection/commit/9caafc9677dee4b8f7ef8c2a74fc6dec9507a6e7))
+* adding more training images to model ([3d52c44](https://github.com/bruvio/image_detection/commit/3d52c443131d2122405b9af869ec8c48a99fb9cb))
+* adding new CNN model ([96ce9a6](https://github.com/bruvio/image_detection/commit/96ce9a64647595abe113f1e14535ac4194d121a4))
+* adding Stratified K-Fold Cross-Validation and update model arch with more neurons and reg techniques to learn add features ([43c0411](https://github.com/bruvio/image_detection/commit/43c04114bf6606e149543e3c70ee7e5b1edc526c))
+* adding templates ([7c41581](https://github.com/bruvio/image_detection/commit/7c41581d197bbfbc6090bb2bac73e2e94380db97))
+* better annotation ([5aba20d](https://github.com/bruvio/image_detection/commit/5aba20d7c7950bfb1cbd661fe5164709328e131c))
+* CNN model ([eec2461](https://github.com/bruvio/image_detection/commit/eec246120b57cce54fccfa558f64d17b5b4c62ab))
+* improve model ([b1f7a0f](https://github.com/bruvio/image_detection/commit/b1f7a0f24bcc660c6186924b8ff7188f7b7e64f3))
+* improve model and improve reporting ([17559b0](https://github.com/bruvio/image_detection/commit/17559b0b5d2e1d10de08a79682b9a3a6a621a8dd))
+* improvements after Sam comments ([c7014da](https://github.com/bruvio/image_detection/commit/c7014da66f36696f1646cefa9d3be14739715cfb))
+* improving model and looking for more ([27eb1f5](https://github.com/bruvio/image_detection/commit/27eb1f57a63cf221beb6b74a39f5ee699a13957a))
+* move templates into folders ([24411c0](https://github.com/bruvio/image_detection/commit/24411c0be552ac786c320baffe95af412b5776bb))
+* saving confusion matrix ([71ab033](https://github.com/bruvio/image_detection/commit/71ab03356a4cec9db9ab5f7cb9ac8ad3812b0fb0))
+* saving training metrics ([e248e37](https://github.com/bruvio/image_detection/commit/e248e3757e4b045840e344c82f3050a59b95e40b))
+
+
+### Reverts
+
+* back ([630c8cb](https://github.com/bruvio/image_detection/commit/630c8cb561372d8034c20d943e368d33609068f7))
+
 ## [2.5.1](https://github.com/bruvio/image_detection/compare/2.5.0...2.5.1) (2024-11-25)
 
 
