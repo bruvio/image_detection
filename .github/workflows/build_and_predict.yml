@@ -15,15 +15,20 @@ on:
         description: 'Learning rate for the optimizer'
         required: false
         default: '0.0002'
+      model:
+        description: 'model to use (simple/complex)'
+        required: false
+        default: 'simple'
 
 jobs:
   build-and-predict:
     runs-on: ubuntu-latest
-
+    timeout-minutes: 1440
     # Set Environment Variables from Inputs
     env:
       EPOCHS: ${{ github.event.inputs.epochs }}
       LEARNING_RATE: ${{ github.event.inputs.learning_rate }}
+      USE_MODEL: ${{ github.event.inputs.model }}
 
     steps:
       # Checkout the repository
@@ -58,7 +63,7 @@ jobs:
 
       # Verify model exists
       - name: Verify model exists
-        run: ls -l image_classifier.keras
+        run: ls -l image_classifier*.keras
 
       # Save Model Artifact
       - name: Save Model Artifact
@@ -66,9 +71,10 @@ jobs:
         with:
           name: image_model
           path: |
-            image_classifier.keras
-            training_metrics.png
-            confusion_matrix.png
+            best_model_fold_*.keras
+            image_classifier_final_*.keras
+            *.png
+            logfile.log
 
       # Download Model Artifact
       - name: Download Model Artifact

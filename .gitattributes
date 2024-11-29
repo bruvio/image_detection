@@ -1,0 +1,7 @@
+# Track all .keras files across the repo
+*.keras filter=lfs diff=lfs merge=lfs -text
+
+# Track all files in complex-model folder
+complex-model/** filter=lfs diff=lfs merge=lfs -text
+# Track all files in simple-model folder
+simple-model/** filter=lfs diff=lfs merge=lfs -text
